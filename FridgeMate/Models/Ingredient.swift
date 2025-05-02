@@ -47,3 +47,20 @@ enum Unit: String, Codable, CaseIterable {
     case teaspoon = "tsp"
     case bunch = "bunch"
 }
+
+struct APIIngredient: Codable {
+    let name: String
+    let amount: Double
+    let unit: String
+}
+
+extension Ingredient {
+    init(api: APIIngredient) {
+        self.init(
+            name: api.name,
+            category: .other,  
+            amount: api.amount,
+            unit: Unit(rawValue: api.unit) ?? .gram
+        )
+    }
+}
