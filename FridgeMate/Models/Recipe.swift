@@ -56,3 +56,42 @@ enum Difficulty: String, Codable, CaseIterable {
     case medium = "Medium"
     case hard = "Hard"
 }
+
+extension Recipe {
+    init(api: APIRecipe) {
+        // ingredients 변환
+        let mappedIngredients = api.extendedIngredients.map { apiIng in
+            RecipeIngredient(
+                name: apiIng.name,
+                amount: apiIng.amount,
+                unit: Unit(rawValue: apiIng.unit) ?? .gram
+            )
+        }
+        let steps = api.analyzedInstructions?
+            .first?
+            .steps
+            .map { $0.step }
+            ?? []
+        
+        let cuisine = Nationality(rawValue: api.cuisines.first ?? "Other") ?? .other
+        
+        let prefs = api.diets.compactMap { str in
+            FoodPreference(rawValue: str.capitalized)
+        }
+        
+        let tags = api.dishTypes
+        
+        self.init(
+            name: api.title,
+            description: api.summary ?? "",
+            ingredients: mappedIngredients,
+            instructions: steps,
+            cookingTime: api.readyInMinutes,
+            difficulty: .medium,
+            cuisine: cuisine,
+            foodPreferences: prefs,
+            allergens: [],
+            tags: tags
+        )
+    }
+}
