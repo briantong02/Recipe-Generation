@@ -6,137 +6,111 @@
 //
 
 import SwiftUI
-import Foundation
 
 struct RecipeRecommendationView: View {
-    @ObservedObject var viewModel: FridgeViewModel
-    @State private var selectedTier: RecipeTier?
-    
+    @ObservedObject var fridgeVM: FridgeViewModel
+    @StateObject private var recipeVM = RecipeRecommendationViewModel()
+    @State private var showDetail = false
+
     var body: some View {
-        VStack {
-            // Tier Selection
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach([RecipeTier.tier1, .tier2, .tier3], id: \.self) { tier in
-                        Button(action: {
-                            selectedTier = selectedTier == tier ? nil : tier
-                        }) {
-                            VStack {
-                                Image(systemName: tierIcon(for: tier))
-                                    .font(.title)
-                                Text(tierTitle(for: tier))
-                                    .font(.caption)
-                            }
-                            .padding()
-                            .background(selectedTier == tier ? Color.blue : Color.gray.opacity(0.2))
-                            .foregroundColor(selectedTier == tier ? .white : .primary)
-                            .cornerRadius(10)
-                        }
-                    }
-                }
-                .padding()
-            }
-            
-            // Recipe List
-            List {
-                ForEach(viewModel.recommendedRecipes) { recipe in
-                    NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                        RecipeCard(recipe: recipe)
+        Group {
+            if recipeVM.isLoadingRecipes {
+                ProgressView("Searching recipes…")
+            } else if let err = recipeVM.errorMessage {
+                Text("Error: \(err)")
+                    .foregroundColor(.red)
+            } else {
+                List(recipeVM.recommendedRecipes) { recipe in
+                    Button(action: {
+                        recipeVM.fetchDetail(for: recipe.id)
+                        showDetail = true
+                    }) {
+                        RecipeRow(recipe: recipe)
                     }
                 }
             }
         }
-        .navigationTitle("Recipe Recommendations")
+        .navigationTitle("Recommendations")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Refresh") {
+                    recipeVM.findRecipes(from: fridgeVM.ingredients)
+                }
+            }
+        }
         .onAppear {
-            viewModel.findRecipes()
+            recipeVM.findRecipes(from: fridgeVM.ingredients)
         }
-    }
-    
-    private func tierIcon(for tier: RecipeTier) -> String {
-        switch tier {
-        case .tier1: return "star.fill"
-        case .tier2: return "star.leadinghalf.filled"
-        case .tier3: return "star"
-        }
-    }
-    
-    private func tierTitle(for tier: RecipeTier) -> String {
-        switch tier {
-        case .tier1: return "All Ingredients"
-        case .tier2: return "Most Ingredients"
-        case .tier3: return "Missing 1-2"
-        }
-    }
-}
-
-struct RecipeCard: View {
-    let recipe: Recipe
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(recipe.name)
-                .font(.headline)
-            
-            Text(recipe.description)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-                .lineLimit(2)
-            
-            HStack {
-                Label("\(recipe.cookingTime) min", systemImage: "clock")
-                Spacer()
-                Label(recipe.difficulty.rawValue, systemImage: "chart.bar")
+        .sheet(isPresented: $showDetail) {
+            if let detail = recipeVM.selectedRecipeDetail {
+                RecipeDetailSheet(detail: detail)
             }
-            .font(.caption)
-            .foregroundColor(.gray)
         }
-        .padding(.vertical, 8)
     }
 }
 
-struct RecipeDetailView: View {
-    let recipe: Recipe
-    
+// MARK: - Supporting Views
+
+struct RecipeRow: View {
+    let recipe: APIRecipe
+    var body: some View {
+        HStack {
+            AsyncImage(url: URL(string: recipe.image)) { img in
+                img.resizable().scaledToFill()
+            } placeholder: {
+                Rectangle().opacity(0.3)
+            }
+            .frame(width: 60, height: 60)
+            .cornerRadius(6)
+
+            Text(recipe.title)
+                .font(.headline)
+                .lineLimit(2)
+        }
+    }
+}
+
+// Sheet view for detailed recipe
+struct RecipeDetailSheet: View {
+    let detail: APIDetailedRecipe
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(recipe.name)
-                    .font(.title)
-                    .bold()
-                
-                Text(recipe.description)
-                    .font(.body)
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Ingredients")
-                        .font(.headline)
-                    
-                    ForEach(recipe.ingredients) { ingredient in
-                        HStack {
-                            Text("• \(ingredient.name)")
-                            Spacer()
-                            Text("\(String(format: "%.1f", ingredient.amount)) \(ingredient.unit.rawValue)")
-                                .foregroundColor(.gray)
-                        }
+            VStack(alignment: .leading, spacing: 16) {
+                AsyncImage(url: URL(string: detail.image)) { img in
+                    img.resizable().scaledToFit()
+                } placeholder: {
+                    Color.gray.opacity(0.3)
+                }
+                Text(detail.title)
+                    .font(.title).bold()
+                Text(detail.summary.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
+
+                Text("Ingredients").font(.headline)
+                ForEach(detail.extendedIngredients) { ing in
+                    Text("• \(ing.original)")
+                }
+
+                if let block = detail.analyzedInstructions.first {
+                    Text("Instructions").font(.headline)
+                    ForEach(block.steps) { step in
+                        Text("\(step.number). \(step.step)")
                     }
                 }
-                
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Instructions")
-                        .font(.headline)
-                    
-                    ForEach(recipe.instructions.indices, id: \.self) { index in
-                        HStack(alignment: .top) {
-                            Text("\(index + 1).")
-                                .fontWeight(.bold)
-                            Text(recipe.instructions[index])
-                        }
-                    }
+
+                Text("Nutrition").font(.headline)
+                ForEach(detail.nutrition.nutrients) { nut in
+                    Text("• \(nut.name): \(nut.amount, specifier: "%.1f")\(nut.unit) (\(nut.percentOfDailyNeeds, specifier: "%.0f")%)")
                 }
             }
             .padding()
         }
-        .navigationTitle("Recipe Details")
     }
 }
+
+struct RecipeRecommendationView_Previews: PreviewProvider {
+    static var previews: some View {
+        RecipeRecommendationView(fridgeVM: FridgeViewModel())
+    }
+}
+
 
