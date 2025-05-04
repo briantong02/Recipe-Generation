@@ -24,7 +24,7 @@ struct FridgeMateApp: App {
                 .tag(0)
                 
                 NavigationView {
-                    RecipeRecommendationView(viewModel: viewModel)
+                    RecipeRecommendationView(fridgeVM: viewModel)
                 }
                 .tabItem {
                     Label("Recipes", systemImage: "book")
