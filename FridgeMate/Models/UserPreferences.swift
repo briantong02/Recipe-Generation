@@ -8,47 +8,41 @@
 import Foundation
 
 struct UserPreferences: Codable {
-    var nationality: Nationality
+    var nationality: Nationality?
     var preferences: [FoodPreference]
     var allergies: [Allergy]
+    var cookingSkillLevel: CookingSkillLevel
+    var cookingTools: Set<CookingTool>
+    var maxPrepTime: PrepTime
 }
 
 enum Nationality: String, Codable, CaseIterable {
-    // Asian countries
-    case korean          = "Korean"
-    case chinese         = "Chinese"
-    case japanese        = "Japanese"
-    case vietnamese      = "Vietnamese"
-    case filipino        = "Filipino"
-    case indian          = "Indian"
-    case thai            = "Thai"
-    case indonesian      = "Indonesian"
-    case malaysian       = "Malaysian"
-    
-    // European countries
-    case british         = "British"
-    case irish           = "Irish"
-    case italian         = "Italian"
-    case greek           = "Greek"
-    case german          = "German"
-    case french          = "French"
-
-    // Middle Eastern and African countries
-    case lebanese        = "Lebanese"
-    case turkish         = "Turkish"
-    case egyptian        = "Egyptian"
-    case southAfrican    = "South African"
-
-    // Oceania and Americas
-    case australian      = "Australian"
-    case newZealander    = "New Zealander"
-    case american        = "American"
-    case canadian        = "Canadian"
-
-    // Others
+    case american = "American"
+    case australian = "Australian"
+    case british = "British"
+    case canadian = "Canadian"
+    case chinese = "Chinese"
+    case egyptian = "Egyptian"
+    case filipino = "Filipino"
+    case french = "French"
+    case german = "German"
+    case greek = "Greek"
+    case indian = "Indian"
+    case indonesian = "Indonesian"
+    case irish = "Irish"
+    case italian = "Italian"
+    case japanese = "Japanese"
+    case korean = "Korean"
+    case lebanese = "Lebanese"
+    case malaysian = "Malaysian"
+    case nepalese = "Nepalese"
+    case newZealander = "New Zealander"
+    case other = "Other"
     case pacificIslander = "Pacific Islander"
-    case indigenousAustralian = "Indigenous Australian"
-    case other           = "Other"
+    case southAfrican = "South African"
+    case thai = "Thai"
+    case turkish = "Turkish"
+    case vietnamese = "Vietnamese"
 }
 
 enum FoodPreference: String, Codable, CaseIterable {
@@ -104,4 +98,24 @@ enum Allergy: String, Codable, CaseIterable {
     case shellfish              = "Shellfish"
     case fishSpecific           = "Fish (specific)"
     case soy                    = "Soy"
+}
+
+enum CookingSkillLevel: String, Codable, CaseIterable {
+    case beginner = "Beginner"
+    case intermediate = "Intermediate"
+    case expert = "Expert"
+}
+
+enum CookingTool: String, Codable, CaseIterable {
+    case oven = "Oven"
+    case microwave = "Microwave"
+    case airFryer = "Air fryer"
+    case stove = "Stove"
+    case noCook = "No-cook"
+}
+
+enum PrepTime: String, Codable, CaseIterable {
+    case quick = "Less than\n 15 min"
+    case medium = "15-30 min"
+    case long = "30-60 min"
 }
