@@ -17,9 +17,12 @@ class FridgeViewModel: ObservableObject {
     init() {
         // Initialize with default preferences
         self.userPreferences = UserPreferences(
-            nationality: .korean,
+            nationality: nil,
             preferences: [],
-            allergies: []
+            allergies: [],
+            cookingSkillLevel: .beginner,
+            cookingTools: [],
+            maxPrepTime: .quick
         )
         
     }
