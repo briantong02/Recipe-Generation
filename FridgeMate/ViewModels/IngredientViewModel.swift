@@ -13,30 +13,36 @@ class IngredientViewModel: ObservableObject{
     
     let session  = URLSession(configuration: .default)
     
-    func searchIngredient(query: String){
-        let url = URL(string: "\(Constant().baseURL)/food/ingredients/search?query=\(query)")
+    func searchIngredient(query: String, completion: @escaping ([Ingredient]?) -> Void){
+        let urlString = "\(Constant().baseURL)/food/ingredients/search?query=\(query)"
         
-        let task = session.dataTask(with: url!){
-            (data,response,error) in
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!) else {
+            completion(nil)
+            return
+        }
+        
+        
+        URLSession.shared.dataTask(with: url){
+            data,response,error in
             if let error = error{
                 
             }
-            if let safeData = data{
-                self.parseJson(ingredientData: data!["results"])
+            if let data = data {
+                do {
+                    let decoded = try JSONDecoder().decode(IngredientSearchResult.self, from: data)
+                    DispatchQueue.main.async {
+                        completion(decoded.results)
+                    }
+                } catch {
+                    print("Decoding error:", error)
+                    completion(nil)
+                }
+            } else {
+                print("Network error:", error ?? "Unknown error")
+                completion(nil)
             }
         }
-        task.resume()
+        .resume()   
     }
     
-    func parseJson(ingredientData: Data){
-        let decoder =  JSONDecoder()
-        do{
-            let decodedData = try decoder.decode(Ingredient.self, from: ingredientData)
-            DispatchQueue.main.async{
-                self.ingredients = decodedData
-            }
-        }catch{
-            print(error)
-        }
-    }
 }

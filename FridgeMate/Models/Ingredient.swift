@@ -24,29 +24,29 @@ import Foundation
 //        self.expiryDate = expiryDate
 //    }
 //}
-//
-//enum IngredientCategory: String, Codable, CaseIterable {
-//    case meat = "Meat"
-//    case vegetable = "Vegetable"
-//    case fruit = "Fruit"
-//    case dairy = "Dairy"
-//    case grain = "Grain"
-//    case spice = "Spice"
-//    case sauce = "Sauce"
-//    case other = "Other"
-//}
-//
-//enum Unit: String, Codable, CaseIterable {
-//    case gram = "g"
-//    case kilogram = "kg"
-//    case milliliter = "ml"
-//    case liter = "L"
-//    case piece = "piece"
-//    case cup = "cup"
-//    case tablespoon = "tbsp"
-//    case teaspoon = "tsp"
-//    case bunch = "bunch"
-//}
+
+enum IngredientCategory: String, Codable, CaseIterable {
+    case meat = "Meat"
+    case vegetable = "Vegetable"
+    case fruit = "Fruit"
+    case dairy = "Dairy"
+    case grain = "Grain"
+    case spice = "Spice"
+    case sauce = "Sauce"
+    case other = "Other"
+}
+
+enum Unit: String, Codable, CaseIterable {
+    case gram = "g"
+    case kilogram = "kg"
+    case milliliter = "ml"
+    case liter = "L"
+    case piece = "piece"
+    case cup = "cup"
+    case tablespoon = "tbsp"
+    case teaspoon = "tsp"
+    case bunch = "bunch"
+}
 
 struct Ingredient: Codable {
     let id: Int
@@ -57,4 +57,8 @@ struct Ingredient: Codable {
     let aisle, image: String
     let meta: [String]
     let categoryPath: [String]
+}
+
+struct IngredientSearchResult: Codable {
+    let results: [Ingredient]
 }
