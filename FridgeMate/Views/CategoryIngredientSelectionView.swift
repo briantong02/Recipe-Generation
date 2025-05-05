@@ -14,8 +14,11 @@ struct CategoryIngredientSelectionView: View {
     let ingredientMap: [IngredientCategory: [String]] = [
       .meat: ["Chicken breast","Beef mince","Pork belly","Lamb","Tuna (canned)"],
       .vegetable: ["Spinach","Onion","Tomato","Potato"],
+      .fruit: ["Apple","Banana","Orange","Strawberry", "Watermelon"],
       .grain: ["Rice","Pasta","Bread","Flour"],
       .dairy: ["Milk","Cheese","Yogurt"],
+      .spice: ["Salt","Pepper","Chili powder"],
+      .sauce: ["Soy sauce","Oyster sauce","Ketchup","Mayonnaise"],
       .other: ["Egg","Tofu","Mushroom"]
     ]
     

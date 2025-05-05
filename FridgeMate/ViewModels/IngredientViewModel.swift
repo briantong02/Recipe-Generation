@@ -42,7 +42,7 @@ class IngredientViewModel: ObservableObject{
                 completion(nil)
             }
         }
-        .resume()   
+        .resume()
     }
     
 }

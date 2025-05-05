@@ -121,7 +121,7 @@ class RecipeRecommendationViewModel: ObservableObject {
         comps.queryItems = [
             URLQueryItem(name: "ingredients", value: list),
             URLQueryItem(name: "number", value: "10"),
-            URLQueryItem(name: "apiKey", value: apiKey)
+            URLQueryItem(name: "apiKey", value: Constant().apiKey)
         ]
 
         URLSession.shared.dataTaskPublisher(for: comps.url!)
@@ -144,7 +144,7 @@ class RecipeRecommendationViewModel: ObservableObject {
         isLoadingDetail = true
         errorMessage = nil
 
-        guard let url = URL(string: "https://api.spoonacular.com/recipes/\(recipeID)/information?includeNutrition=true&apiKey=\(apiKey)") else {
+        guard let url = URL(string: "\(Constant().baseURL)/recipes/\(recipeID)/information?includeNutrition=true&apiKey=\(apiKey)") else {
             errorMessage = "Invalid URL for recipe detail."
             isLoadingDetail = false
             return
