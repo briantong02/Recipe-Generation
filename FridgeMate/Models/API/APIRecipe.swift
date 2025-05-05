@@ -27,6 +27,7 @@ struct APIRecipe: Codable {
     let sourceUrl: String?
     let extendedIngredients: [APIIngredient]
     let analyzedInstructions: [APIInstruction]?
+    let nutrition: APINutrition?
 }
 
 struct APIIngredient: Codable {
@@ -58,4 +59,15 @@ struct APIInstruction: Codable {
 struct APIInstructionStep: Codable {
     let number: Int
     let step: String
+}
+
+struct APINutrition: Codable {
+    let nutrients: [APINutrient]
+}
+
+struct APINutrient: Codable, Identifiable {
+    var id: String { name }
+    let name: String
+    let amount: Double
+    let unit: String
 }

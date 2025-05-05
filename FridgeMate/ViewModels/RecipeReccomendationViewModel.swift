@@ -11,66 +11,30 @@
 import Foundation
 import Combine
 
-// MARK: - Models
-
-/// A summary of a recipe returned by complex search.
-struct RecipeSummary: Codable, Identifiable {
-    let id: Int
-    let title: String
-    let image: String
-    let readyInMinutes: Int?
-}
-
-struct ComplexSearchResponse: Codable {
-    let results: [RecipeSummary]
-}
-
-// MARK: - ViewModel
-
-/// Fetches list of recipes based on ingredients.
+// ViewModel for recipe recommendation list
 class RecipeRecommendationViewModel: ObservableObject {
-    @Published var recipes: [RecipeSummary] = []
-    @Published var isLoadingList = false
+    @Published var recipes: [Recipe] = []
+    @Published var isLoading = false
     @Published var errorMessage: String?
 
     private var cancellables = Set<AnyCancellable>()
-    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
-    private let baseURL = "https://api.spoonacular.com"
 
-    /// Performs a complex search for recipes including given ingredients.
-    func findRecipes(from ingredients: [Ingredient]) {
-        guard !ingredients.isEmpty else {
-            recipes = []
-            return
-        }
-        isLoadingList = true
+    // Load recipes based on fridge ingredients
+    func loadRecipes(from ingredients: [Ingredient]) {
+        let names = ingredients.map { $0.name }
+        isLoading = true
         errorMessage = nil
 
-        let query = ingredients.map { $0.name }.joined(separator: ",")
-        var components = URLComponents(string: "\(baseURL)/recipes/complexSearch")!
-        components.queryItems = [
-            URLQueryItem(name: "includeIngredients", value: query),
-            URLQueryItem(name: "number", value: "10"),
-            URLQueryItem(name: "apiKey", value: apiKey)
-        ]
-
-        guard let url = components.url else {
-            errorMessage = "Invalid URL"
-            isLoadingList = false
-            return
-        }
-
-        URLSession.shared.dataTaskPublisher(for: url)
-            .map(\.data)
-            .decode(type: ComplexSearchResponse.self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
+        RecipeService.shared
+            .fetchRecipes(query: names)
+            .map { apiList in apiList.map(Recipe.init(api:)) }
             .sink { [weak self] completion in
-                self?.isLoadingList = false
-                if case let .failure(err) = completion {
-                    self?.errorMessage = err.localizedDescription
+                self?.isLoading = false
+                if case let .failure(error) = completion {
+                    self?.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] response in
-                self?.recipes = response.results
+            } receiveValue: { [weak self] mapped in
+                self?.recipes = mapped
             }
             .store(in: &cancellables)
     }

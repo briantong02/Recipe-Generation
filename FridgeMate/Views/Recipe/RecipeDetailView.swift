@@ -7,127 +7,84 @@
 
 import SwiftUI
 
-/// Detailed recipe view that fetches and displays full recipe info without rendering HTML tags.
 struct RecipeDetailView: View {
     let recipeID: Int
-    @StateObject private var detailVM = RecipeDetailModel()
+    @StateObject private var vm = RecipeDetailViewModel()
+    
+    init(recipeID: Int) { self.recipeID = recipeID }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Header Image
-                if let urlString = detailVM.detail?.image,
-                   let url = URL(string: urlString) {
+            VStack(alignment: .leading, spacing: 16) {
+                if let imgUrl = vm.detail?.image, let url = URL(string: imgUrl) {
                     AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .scaledToFill()
+                        image.resizable().scaledToFill()
                     } placeholder: {
                         Color(.systemGray5)
                     }
-                    .frame(height: 250)
-                    .clipped()
+                    .frame(height: 250).clipped()
                 }
 
-                // Title
-                Text(detailVM.detail?.title ?? "Loading…")
-                    .font(.largeTitle)
-                    .bold()
-                    .padding(.horizontal)
+                Text(vm.detail?.title ?? "Loading...")
+                    .font(.largeTitle).bold().padding(.horizontal)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    // Summary (strip HTML tags)
-                    if let rawSummary = detailVM.detail?.summary {
-                        let summaryText = rawSummary
-                            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
-                        Text(summaryText)
-                            .font(.body)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                if let summary = vm.detail?.summary {
+                    Text(summary.replacingOccurrences(of: "<[^>]+>",
+                                                       with: "",
+                                                       options: .regularExpression))
+                        .padding(.horizontal)
+                }
 
-                    Divider()
+                Divider().padding(.horizontal)
 
-                    // Ingredients
-                    if let ingredients = detailVM.detail?.extendedIngredients {
-                        Text("Ingredients")
-                            .font(.title2)
-                            .bold()
-                            .padding(.bottom, 4)
-
-                        ForEach(ingredients) { ing in
-                            HStack(alignment: .top, spacing: 8) {
-                                Text("•")
-                                Text(ing.original)
-                                    .font(.body)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                if let ingredients = vm.detail?.extendedIngredients {
+                    VStack(alignment: .leading) {
+                        Text("Ingredients").font(.title2).bold().padding(.horizontal)
+                        ForEach(ingredients, id: \.name) { ing in
+                            Text("• \(ing.original ?? ing.name)")
+                                .padding(.horizontal)
                         }
                     }
+                }
 
-                    Divider()
+                Divider().padding(.horizontal)
 
-                    // Instructions (strip HTML tags)
-                    if let rawInstr = detailVM.detail?.instructions {
-                        let instrText = rawInstr
-                            .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+                // Instruction
+                if let steps = vm.detail?.analyzedInstructions?.first?.steps {
+                    VStack(alignment: .leading) {
                         Text("Instructions")
-                            .font(.title2)
-                            .bold()
-                            .padding(.bottom, 4)
-
-                        Text(instrText)
-                            .font(.body)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    Divider()
-
-                    // Nutrition Grid
-                    if let nutrients = detailVM.detail?.nutrition?.nutrients {
-                        Text("Nutrition")
-                            .font(.title2)
-                            .bold()
-                            .padding(.bottom, 4)
-
-                        LazyVGrid(
-                            columns: [GridItem(.adaptive(minimum: 120), spacing: 16)],
-                            spacing: 12
-                        ) {
-                            ForEach(nutrients) { nut in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(nut.name)
-                                        .font(.subheadline)
-                                        .bold()
-                                        .fixedSize(horizontal: false, vertical: true)
-                                    Text(String(format: "%.0f%@", nut.amount, nut.unit))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(8)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(8)
-                                .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
-                            }
-                        }
+                            .font(.title2).bold().padding(.horizontal)
+                        ForEach(steps, id: \.number) { step in
+                            Text("\(step.number). \(step.step)")
+                            .padding(.horizontal)
                     }
                 }
-                .padding(.horizontal)
-            }
-            .padding(.top)
-        }
-        .background(Color(.systemGroupedBackground))
-        .onAppear {
-            detailVM.fetchDetail(for: recipeID)
-        }
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
 
-// MARK: - Preview
-struct RecipeDetailView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            RecipeDetailView(recipeID: 716429)
+                Divider().padding(.horizontal)
+
+                // Nutrition
+                if let nutrients = vm.detail?.nutrition?.nutrients {
+                    VStack(alignment: .leading) {
+                        Text("Nutrition")
+                            .font(.title2).bold().padding(.horizontal)
+                        ForEach(nutrients) { nut in
+                            HStack {
+                                Text(nut.name)
+                                    .font(.subheadline).bold()
+                                Spacer()
+                                Text(String(format: "%g%@", nut.amount, nut.unit))
+                                    .font(.caption).foregroundColor(.secondary)
+                            }
+                            .padding().background(Color(.systemGray6)).cornerRadius(8)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+            }
         }
+        .onAppear { vm.loadDetail(id: recipeID) }
+        .navigationTitle("Details")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
