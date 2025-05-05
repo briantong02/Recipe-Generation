@@ -42,7 +42,7 @@ struct CategoryIngredientSelectionView: View {
             "Rice", "Brown rice", "Basmati rice", "Quinoa", "Oats",
             "Rolled oats", "Pasta", "Spaghetti", "Macaroni", "Bread",
             "Flour", "Cornmeal", "Couscous", "Barley", "Bulgur",
-            "Tortilla", "Bagel", "Bagel", "Rye bread", "Pita bread"
+            "Tortilla", "Bagel", "Rye bread", "Pita bread"
         ],
         .spice: [
             "Salt", "Black pepper", "Paprika", "Cayenne pepper", "Cumin",
