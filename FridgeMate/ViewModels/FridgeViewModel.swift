@@ -55,12 +55,15 @@ class FridgeViewModel: ObservableObject {
     
     // Add multiple ingredients at once
     func addIngredients(_ newItems: [Ingredient]) {
+        print("🧩 addIngredients called with:", newItems.map(\.name))
         ingredients.append(contentsOf: newItems)
+        findRecipes()
     }
 
     // Remove an ingredient by id
     func removeIngredients(_ ingredient: Ingredient) {
         ingredients.removeAll { $0.id == ingredient.id }
+        findRecipes()
     }
 
     // Clear all ingredients

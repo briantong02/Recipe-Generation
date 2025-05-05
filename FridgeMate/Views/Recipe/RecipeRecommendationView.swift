@@ -52,7 +52,14 @@ struct RecipeRecommendationView: View {
             Button { vm.loadRecipes(from: fridgeVM.ingredients) }
             label: { Image(systemName: "arrow.clockwise") }
         }
-        .onAppear { vm.loadRecipes(from: fridgeVM.ingredients) }
+        .onAppear {
+            vm.loadRecipes(from: fridgeVM.ingredients)
+        }
+        .onChange(of: fridgeVM.ingredients) { oldList, newList in
+            print("🍽 old:", oldList.map(\.name))
+            print("🍽 new:", newList.map(\.name))
+            vm.loadRecipes(from: newList)
+        }
         .sheet(item: $selectedRecipeID) { id in
             RecipeDetailView(recipeID: id)
         }

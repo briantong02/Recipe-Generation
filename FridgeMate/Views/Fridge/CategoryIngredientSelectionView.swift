@@ -64,10 +64,20 @@ struct CategoryIngredientSelectionView: View {
         ]
     ]
     
+    // Currently selected ingredient names
     @State private var selections: Set<String> = []
+    // Text in the search bar
     @State private var searchText = ""
     
-    // Filtered ingredients for each category
+    // Initialize with existing fridge contents selected
+    init(viewModel: FridgeViewModel) {
+        self.viewModel = viewModel
+        // Pre-select ingredients already in the fridge
+        let existingNames = Set(viewModel.ingredients.map(\.name))
+        _selections = State(initialValue: existingNames)
+    }
+    
+    // Returns only those ingredients matching the search text
     private var filteredMap: [IngredientCategory: [String]] {
         let query = searchText.lowercased()
         return ingredientMap.mapValues { items in
@@ -75,7 +85,7 @@ struct CategoryIngredientSelectionView: View {
             return items.filter { $0.lowercased().contains(query) }
         }
     }
-
+    
     var body: some View {
         NavigationView {
             List {
@@ -92,9 +102,20 @@ struct CategoryIngredientSelectionView: View {
                         placement: .navigationBarDrawer(displayMode: .always))
             .navigationTitle("Quick Add Ingredients")
             .toolbar {
+                // Save button to sync selections with fridge
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add \(selections.count)") {
-                        let newItems = selections.map { name -> Ingredient in
+                        // 1. Remove unselected ingredients
+                        let toRemove = viewModel.ingredients
+                            .filter { !selections.contains($0.name) }
+                        toRemove.forEach { ingredient in
+                            viewModel.removeIngredients(ingredient)
+                        }
+
+                        // 2. Add newly selected ingredients
+                        let existing = Set(viewModel.ingredients.map(\.name))
+                        let toAdd = selections.subtracting(existing)
+                        let newItems = toAdd.map { name -> Ingredient in
                             let category = deriveCategory(from: name)
                             return Ingredient(
                                 name: name,
@@ -103,39 +124,49 @@ struct CategoryIngredientSelectionView: View {
                                 unit: .piece
                             )
                         }
-                        viewModel.addIngredients(newItems)
+                        newItems.forEach(viewModel.addIngredient)
+
                         dismiss()
                     }
                     .disabled(selections.isEmpty)
+                }
+
+                // Cancel button to dismiss without changes
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
     }
 
-    // Determine category from name
+    // MARK: - Helper
+
+    /// Determine the category for a given ingredient name
     private func deriveCategory(from name: String) -> IngredientCategory {
-        IngredientCategory.allCases.first(where: { ingredientMap[$0]?.contains(name) == true }) ?? .other
+        IngredientCategory.allCases
+            .first { ingredientMap[$0]?.contains(name) == true }
+            ?? .other
     }
-}
 
-// Subview for each category section
-fileprivate struct CategorySection: View {
-    let category: IngredientCategory
-    let items: [String]
-    @Binding var selections: Set<String>
+    // MARK: - Subview
 
-    var body: some View {
-        Section(header: Text(category.rawValue)) {
-            ForEach(items, id: \.self) { name in
-                Toggle(name, isOn: Binding(
-                    get: { selections.contains(name) },
-                    set: { isOn in
-                        if isOn { selections.insert(name) }
-                        else { selections.remove(name) }
-                    }
-                ))
+    fileprivate struct CategorySection: View {
+        let category: IngredientCategory
+        let items: [String]
+        @Binding var selections: Set<String>
+
+        var body: some View {
+            Section(header: Text(category.rawValue)) {
+                ForEach(items, id: \.self) { name in
+                    Toggle(name, isOn: Binding(
+                        get: { selections.contains(name) },
+                        set: { isOn in
+                            if isOn { selections.insert(name) }
+                            else     { selections.remove(name) }
+                        }
+                    ))
+                }
             }
         }
     }
 }
-

@@ -7,6 +7,7 @@
 
 import Foundation
 
+// The app’s internal recipe model
 struct Recipe: Identifiable, Codable {
     let id: UUID
     var apiID: Int?
@@ -23,7 +24,8 @@ struct Recipe: Identifiable, Codable {
     var tags: [String]
     var ingredients: [RecipeIngredient]
     var instructions: [String]
-
+    
+    // Primary initializer
     init(
         id: UUID = UUID(),
         apiID: Int? = nil,
@@ -59,6 +61,62 @@ struct Recipe: Identifiable, Codable {
     }
 }
 
+// Maps an APIRecipe (from Spoonacular) into the app’s Recipe
+extension Recipe {
+    // Initialize internal Recipe from APIRecipe
+    init(api: APIRecipe) {
+        // 1. Map ingredients
+        let mappedIngredients = (api.extendedIngredients ?? []).map { ing in
+            RecipeIngredient(
+                name: ing.name,
+                amount: ing.amount,
+                unit: Unit(rawValue: ing.unit) ?? .gram,
+                isOptional: ing.original?.lowercased().contains("optional") ?? false
+            )
+        }
+
+        // 2. Map instructions (first group’s steps)
+        let mappedInstructions: [String] = api.analyzedInstructions?
+            .first?
+            .steps
+            .map { $0.step } ?? []
+
+        // 3. Convert image/source URLs
+        let imageURL: URL?     = api.image
+        let sourceURL: URL?    = api.sourceUrl
+
+        // 4. optional string arrays
+        let cuisines = api.cuisines ?? []
+        let diets = api.diets    ?? []
+        let tags = api.dishTypes ?? []
+
+        // 5. map enums
+        let cuisine = Nationality(rawValue: cuisines.first ?? "Other") ?? .other
+        let prefs   = diets.compactMap { FoodPreference(rawValue: $0.capitalized) }
+
+        let cookingTime = api.readyInMinutes ?? 0
+        
+        // 6. Initialize with safe defaults
+        self.init(
+            apiID: api.id,
+            name: api.title,
+            description: api.summary ?? "",
+            imageURL: imageURL,
+            sourceURL: sourceURL,
+            cookingTime: cookingTime,
+            servings: api.servings,
+            difficulty: .medium,
+            cuisine: cuisine,
+            foodPreferences: prefs,
+            allergens: [],
+            tags: tags,
+            ingredients: mappedIngredients,
+            instructions: mappedInstructions
+        )
+    }
+}
+
+// Represents one ingredient in a Recipe
 struct RecipeIngredient: Identifiable, Codable {
     let id: UUID
     var name: String
@@ -81,50 +139,9 @@ struct RecipeIngredient: Identifiable, Codable {
     }
 }
 
+// Difficulty levels (you can expand/use user preferences)
 enum Difficulty: String, Codable, CaseIterable {
     case easy = "Easy"
     case medium = "Medium"
     case hard = "Hard"
-}
-
-// Convert from APIRecipe to app Recipe
-extension Recipe {
-    init(api: APIRecipe) {
-        // Map ingredients
-        let mappedIngredients = api.extendedIngredients.map { apiIng in
-            RecipeIngredient(
-                name: apiIng.name,
-                amount: apiIng.amount,
-                unit: Unit(rawValue: apiIng.unit) ?? .gram
-            )
-        }
-        // Map instructions (first instruction group's steps)
-        let steps = api.analyzedInstructions?
-            .first?
-            .steps
-            .map { $0.step } ?? []
-        // Map URLs
-        let imageURL = api.image.flatMap(URL.init(string:))
-        let sourceURL = api.sourceUrl.flatMap(URL.init(string:))
-        // Map cuisine/diets/dishTypes
-        let cuisine = Nationality(rawValue: api.cuisines.first ?? "Other") ?? .other
-        let prefs = api.diets.compactMap { FoodPreference(rawValue: $0.capitalized) }
-        // Initialize
-        self.init(
-            apiID: api.id,
-            name: api.title,
-            description: api.summary ?? "",
-            imageURL: imageURL,
-            sourceURL: sourceURL,
-            cookingTime: api.readyInMinutes,
-            servings: api.servings,
-            difficulty: .medium,
-            cuisine: cuisine,
-            foodPreferences: prefs,
-            allergens: [],
-            tags: api.dishTypes,
-            ingredients: mappedIngredients,
-            instructions: steps
-        )
-    }
 }

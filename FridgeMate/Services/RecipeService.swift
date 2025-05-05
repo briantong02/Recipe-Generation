@@ -21,33 +21,48 @@ class RecipeService {
                 .setFailureType(to: Error.self)
                 .eraseToAnyPublisher()
         }
-        var components = URLComponents(url: baseURL.appendingPathComponent("recipes/complexSearch"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("recipes/findByIngredients"),
+            resolvingAgainstBaseURL: false
+        )!
         components.queryItems = [
-            URLQueryItem(name: "includeIngredients", value: ingredients.joined(separator: ",")),
+            URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
             URLQueryItem(name: "addRecipeInformation", value: "true"),
-            URLQueryItem(name: "number", value: "10"),
+            URLQueryItem(name: "number", value: "30"),
             URLQueryItem(name: "apiKey", value: apiKey)
         ]
+        print("🔗 Fetch URL:", components.url!)
         let request = URLRequest(url: components.url!)
+        let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        // Perform the network request and decode into [APIRecipe]
         return URLSession.shared.dataTaskPublisher(for: request)
             .map(\.data)
-            .decode(type: SpoonacularRecipeResponse.self, decoder: JSONDecoder())
-            .map { $0.results }
+            .decode(type: [APIRecipe].self, decoder: decoder)
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
 
     // Fetch detailed recipe information by API ID
     func fetchRecipeDetail(id: Int) -> AnyPublisher<APIRecipe, Error> {
-        var components = URLComponents(url: baseURL.appendingPathComponent("recipes/\(id)/information"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent("recipes/\(id)/information"),
+            resolvingAgainstBaseURL: false
+        )!
         components.queryItems = [
             URLQueryItem(name: "includeNutrition", value: "true"),
             URLQueryItem(name: "apiKey", value: apiKey)
         ]
         let request = URLRequest(url: components.url!)
+        
+        let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+        
+        // Perform the network request and decode into a single APIRecipe
         return URLSession.shared.dataTaskPublisher(for: request)
             .map(\.data)
-            .decode(type: APIRecipe.self, decoder: JSONDecoder())
+            .decode(type: APIRecipe.self, decoder: decoder)
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }

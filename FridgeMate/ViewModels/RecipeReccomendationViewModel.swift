@@ -21,6 +21,7 @@ class RecipeRecommendationViewModel: ObservableObject {
 
     // Load recipes based on fridge ingredients
     func loadRecipes(from ingredients: [Ingredient]) {
+        print("⚙️ loadRecipes called with:", ingredients.map(\.name))
         let names = ingredients.map { $0.name }
         isLoading = true
         errorMessage = nil
@@ -29,13 +30,15 @@ class RecipeRecommendationViewModel: ObservableObject {
             .fetchRecipes(query: names)
             .map { apiList in apiList.map(Recipe.init(api:)) }
             .sink { [weak self] completion in
+                print("📡 completion:", completion)
                 self?.isLoading = false
                 if case let .failure(error) = completion {
                     self?.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] mapped in
-                self?.recipes = mapped
-            }
+            } receiveValue: { [weak self] recipes in
+                print("✅ received \(recipes.count) recipes")
+                self?.recipes = recipes
+              }
             .store(in: &cancellables)
     }
 }
