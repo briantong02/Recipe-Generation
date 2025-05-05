@@ -19,7 +19,7 @@ struct RecipeRecommendationView: View {
     @State private var selectedRecipeID: Int? = nil
 
     var body: some View {
-        NavigationView {
+        
             Group {
                 if recipeVM.isLoadingList {
                     ProgressView("Loading recipes…")
@@ -78,5 +78,4 @@ struct RecipeRecommendationView: View {
                 RecipeDetailView(recipeID: id)
             }
         }
-    }
 }
