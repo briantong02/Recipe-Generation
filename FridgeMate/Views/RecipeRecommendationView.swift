@@ -7,110 +7,76 @@
 
 import SwiftUI
 
+/// Make Int optional usable with .sheet(item:)
+extension Int: Identifiable {
+    public var id: Int { self }
+}
+
+/// Shows a list of recipe recommendations based on fridge ingredients.
 struct RecipeRecommendationView: View {
-    @ObservedObject var fridgeVM: FridgeViewModel
+    @ObservedObject var viewModel: FridgeViewModel
     @StateObject private var recipeVM = RecipeRecommendationViewModel()
-    @State private var showDetail = false
+    @State private var selectedRecipeID: Int? = nil
 
     var body: some View {
-        Group {
-            if recipeVM.isLoadingRecipes {
-                ProgressView("Searching recipes…")
-            } else if let err = recipeVM.errorMessage {
-                Text("Error: \(err)")
-                    .foregroundColor(.red)
-            } else {
-                List(recipeVM.recommendedRecipes) { recipe in
-                    Button(action: {
-                        recipeVM.fetchDetail(for: recipe.id)
-                        showDetail = true
-                    }) {
-                        RecipeRow(recipe: recipe)
+        NavigationView {
+            Group {
+                if recipeVM.isLoadingList {
+                    ProgressView("Loading recipes…")
+                        .padding()
+                } else if let err = recipeVM.errorMessage {
+                    Text("Error: \(err)")
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                } else {
+                    List(recipeVM.recipes) { recipe in
+                        Button(action: { selectedRecipeID = recipe.id }) {
+                            HStack(alignment: .top, spacing: 16) {
+                                AsyncImage(url: URL(string: recipe.image)) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFill()
+                                    } else {
+                                        Color.gray
+                                    }
+                                }
+                                .frame(width: 80, height: 80)
+                                .cornerRadius(8)
+
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(recipe.title)
+                                        .font(.headline)
+                                        .lineLimit(2)
+                                    if let time = recipe.readyInMinutes {
+                                        Text("⏱ \(time) min")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .listRowBackground(Color.clear)
+                    }
+                    .listStyle(PlainListStyle())
+                }
+            }
+            .navigationTitle("Recommendations")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { recipeVM.findRecipes(from: viewModel.ingredients) }) {
+                        Image(systemName: "arrow.clockwise")
                     }
                 }
             }
-        }
-        .navigationTitle("Recommendations")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Refresh") {
-                    recipeVM.findRecipes(from: fridgeVM.ingredients)
-                }
+            .onAppear {
+                recipeVM.findRecipes(from: viewModel.ingredients)
             }
-        }
-        .onAppear {
-            recipeVM.findRecipes(from: fridgeVM.ingredients)
-        }
-        .sheet(isPresented: $showDetail) {
-            if let detail = recipeVM.selectedRecipeDetail {
-                RecipeDetailSheet(detail: detail)
+            .sheet(item: $selectedRecipeID) { id in
+                RecipeDetailView(recipeID: id)
             }
         }
     }
 }
-
-// MARK: - Supporting Views
-
-struct RecipeRow: View {
-    let recipe: APIRecipe
-    var body: some View {
-        HStack {
-            AsyncImage(url: URL(string: recipe.image)) { img in
-                img.resizable().scaledToFill()
-            } placeholder: {
-                Rectangle().opacity(0.3)
-            }
-            .frame(width: 60, height: 60)
-            .cornerRadius(6)
-
-            Text(recipe.title)
-                .font(.headline)
-                .lineLimit(2)
-        }
-    }
-}
-
-// Sheet view for detailed recipe
-struct RecipeDetailSheet: View {
-    let detail: APIDetailedRecipe
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                AsyncImage(url: URL(string: detail.image)) { img in
-                    img.resizable().scaledToFit()
-                } placeholder: {
-                    Color.gray.opacity(0.3)
-                }
-                Text(detail.title)
-                    .font(.title).bold()
-                Text(detail.summary.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
-
-                Text("Ingredients").font(.headline)
-                ForEach(detail.extendedIngredients) { ing in
-                    Text("• \(ing.original)")
-                }
-
-                if let block = detail.analyzedInstructions.first {
-                    Text("Instructions").font(.headline)
-                    ForEach(block.steps) { step in
-                        Text("\(step.number). \(step.step)")
-                    }
-                }
-
-                Text("Nutrition").font(.headline)
-                ForEach(detail.nutrition.nutrients) { nut in
-                    Text("• \(nut.name): \(nut.amount, specifier: "%.1f")\(nut.unit) (\(nut.percentOfDailyNeeds, specifier: "%.0f")%)")
-                }
-            }
-            .padding()
-        }
-    }
-}
-
-struct RecipeRecommendationView_Previews: PreviewProvider {
-    static var previews: some View {
-        RecipeRecommendationView(fridgeVM: FridgeViewModel())
-    }
-}
-
-

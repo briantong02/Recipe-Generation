@@ -11,157 +11,68 @@
 import Foundation
 import Combine
 
-// MARK: - API Models (Internal to ViewModel)
+// MARK: - Models
 
-struct APIRecipe: Identifiable, Decodable {
+/// A summary of a recipe returned by complex search.
+struct RecipeSummary: Codable, Identifiable {
     let id: Int
     let title: String
     let image: String
+    let readyInMinutes: Int?
 }
 
-struct APIDetailedRecipe: Decodable {
-    let id: Int
-    let title: String
-    let image: String
-    let summary: String
-    let readyInMinutes: Int
-    let servings: Int
-    let vegetarian: Bool
-    let vegan: Bool
-    let glutenFree: Bool
-    let dairyFree: Bool
-    let cheap: Bool
-    let sustainable: Bool
-    let dishTypes: [String]
-    let cuisines: [String]
-    let extendedIngredients: [IngredientDetail]
-    let analyzedInstructions: [InstructionBlock]
-    let nutrition: NutritionInfo
-}
-
-struct IngredientDetail: Identifiable, Decodable {
-    let id: Int
-    let aisle: String
-    let name: String
-    let original: String
-    let amount: Double
-    let unit: String
-    let measures: MeasureOptions
-}
-
-struct MeasureOptions: Decodable {
-    let us: Measure
-    let metric: Measure
-}
-
-struct Measure: Decodable {
-    let amount: Double
-    let unitShort: String
-    let unitLong: String
-}
-
-struct InstructionBlock: Decodable {
-    let name: String
-    let steps: [Step]
-}
-
-struct Step: Identifiable, Decodable {
-    let id = UUID()
-    let number: Int
-    let step: String
-    let ingredients: [SimpleIngredient]
-    let equipment: [SimpleEquipment]
-}
-
-struct SimpleIngredient: Identifiable, Decodable {
-    let id: Int
-    let name: String
-}
-
-struct SimpleEquipment: Identifiable, Decodable {
-    let id: Int
-    let name: String
-}
-
-struct NutritionInfo: Decodable {
-    let nutrients: [Nutrient]
-}
-
-struct Nutrient: Identifiable, Decodable {
-    var id: String { name }
-    let name: String
-    let amount: Double
-    let unit: String
-    let percentOfDailyNeeds: Double
+struct ComplexSearchResponse: Codable {
+    let results: [RecipeSummary]
 }
 
 // MARK: - ViewModel
 
+/// Fetches list of recipes based on ingredients.
 class RecipeRecommendationViewModel: ObservableObject {
-    @Published var recommendedRecipes: [APIRecipe] = []
-    @Published var selectedRecipeDetail: APIDetailedRecipe?
-    @Published var isLoadingRecipes = false
-    @Published var isLoadingDetail = false
+    @Published var recipes: [RecipeSummary] = []
+    @Published var isLoadingList = false
     @Published var errorMessage: String?
 
     private var cancellables = Set<AnyCancellable>()
-    private let apiKey = "YOUR_SPOONACULAR_API_KEY"
+    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
+    private let baseURL = "https://api.spoonacular.com"
 
-    /// Fetches recipes matching the given ingredient names
+    /// Performs a complex search for recipes including given ingredients.
     func findRecipes(from ingredients: [Ingredient]) {
         guard !ingredients.isEmpty else {
-            errorMessage = "No ingredients available to search recipes."
+            recipes = []
             return
         }
-        isLoadingRecipes = true
+        isLoadingList = true
         errorMessage = nil
 
-        let list = ingredients.map { $0.name }.joined(separator: ",")
-        var comps = URLComponents(string: "https://api.spoonacular.com/recipes/findByIngredients")!
-        comps.queryItems = [
-            URLQueryItem(name: "ingredients", value: list),
+        let query = ingredients.map { $0.name }.joined(separator: ",")
+        var components = URLComponents(string: "\(baseURL)/recipes/complexSearch")!
+        components.queryItems = [
+            URLQueryItem(name: "includeIngredients", value: query),
             URLQueryItem(name: "number", value: "10"),
             URLQueryItem(name: "apiKey", value: Constant().apiKey)
         ]
 
-        URLSession.shared.dataTaskPublisher(for: comps.url!)
-            .map(\.data)
-            .decode(type: [APIRecipe].self, decoder: JSONDecoder())
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] completion in
-                self?.isLoadingRecipes = false
-                if case let .failure(err) = completion {
-                    self?.errorMessage = err.localizedDescription
-                }
-            } receiveValue: { [weak self] recipes in
-                self?.recommendedRecipes = recipes
-            }
-            .store(in: &cancellables)
-    }
-
-    /// Fetches detailed information for a specific recipe ID
-    func fetchDetail(for recipeID: Int) {
-        isLoadingDetail = true
-        errorMessage = nil
-
-        guard let url = URL(string: "\(Constant().baseURL)/recipes/\(recipeID)/information?includeNutrition=true&apiKey=\(apiKey)") else {
-            errorMessage = "Invalid URL for recipe detail."
-            isLoadingDetail = false
+        guard let url = components.url else {
+            errorMessage = "Invalid URL"
+            isLoadingList = false
             return
         }
 
         URLSession.shared.dataTaskPublisher(for: url)
             .map(\.data)
-            .decode(type: APIDetailedRecipe.self, decoder: JSONDecoder())
+            .decode(type: ComplexSearchResponse.self, decoder: JSONDecoder())
             .receive(on: DispatchQueue.main)
             .sink { [weak self] completion in
-                self?.isLoadingDetail = false
+                self?.isLoadingList = false
                 if case let .failure(err) = completion {
                     self?.errorMessage = err.localizedDescription
                 }
-            } receiveValue: { [weak self] detail in
-                self?.selectedRecipeDetail = detail
+            } receiveValue: { [weak self] response in
+                self?.recipes = response.results
             }
             .store(in: &cancellables)
     }
 }
+
