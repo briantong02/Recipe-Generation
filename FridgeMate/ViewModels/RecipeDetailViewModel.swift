@@ -46,15 +46,13 @@ class RecipeDetailModel: ObservableObject {
     @Published var errorMessage: String?
 
     private var cancellables = Set<AnyCancellable>()
-    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
-    private let baseURL = "https://api.spoonacular.com"
 
     /// Fetches full recipe information including nutrition.
     func fetchDetail(for id: Int) {
         isLoading = true
         errorMessage = nil
 
-        let urlString = "\(baseURL)/recipes/\(id)/information?includeNutrition=true&apiKey=\(apiKey)"
+        let urlString = "\(Constant().baseURL)/recipes/\(id)/information?includeNutrition=true&apiKey=\(Constant().apiKey)"
         guard let url = URL(string: urlString) else {
             errorMessage = "Invalid URL"
             isLoading = false

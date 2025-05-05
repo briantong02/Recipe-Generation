@@ -34,8 +34,6 @@ class RecipeRecommendationViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     private var cancellables = Set<AnyCancellable>()
-    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
-    private let baseURL = "https://api.spoonacular.com"
 
     /// Performs a complex search for recipes including given ingredients.
     func findRecipes(from ingredients: [Ingredient]) {
@@ -47,9 +45,9 @@ class RecipeRecommendationViewModel: ObservableObject {
         errorMessage = nil
 
         let query = ingredients.map { $0.name }.joined(separator: ",")
-        var components = URLComponents(string: "\(baseURL)/recipes/complexSearch")!
+        var components = URLComponents(string: "\(Constant().baseURL)/recipes/complexSearch")!
         components.queryItems = [
-            URLQueryItem(name: "includeIngredients", value: query),
+            URLQueryItem(name: "ingredients", value: query),
             URLQueryItem(name: "number", value: "10"),
             URLQueryItem(name: "apiKey", value: Constant().apiKey)
         ]
