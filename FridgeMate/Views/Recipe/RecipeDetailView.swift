@@ -8,28 +8,14 @@
 import SwiftUI
 
 struct RecipeDetailView: View {
-    let recipeID: Int
+    let recipe: Recipe
+    @ObservedObject var recipeViewModel: RecipeRecommendationViewModel
     @StateObject private var vm = RecipeDetailViewModel()
     @Environment(\.dismiss) private var dismiss
-    
-    init(recipeID: Int) {
-        self.recipeID = recipeID
-    }
+    @State private var isSaved: Bool = false
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Custom close button at top
-            HStack {
-                Spacer()
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .resizable()
-                        .frame(width: 28, height: 28)
-                        .foregroundColor(.gray)
-                        .padding()
-                }
-            }
-            
+        NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Recipe image
@@ -117,9 +103,24 @@ struct RecipeDetailView: View {
                 }
             }
             .onAppear {
-                vm.loadDetail(id: recipeID) }
-            .navigationTitle("Details")
+                vm.loadDetail(id: recipe.apiID!)
+                isSaved = recipeViewModel.isRecipeSaved(recipe)
+            }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(
+                leading: Button("Back") { dismiss() },
+                trailing: Button(action: {
+                    isSaved.toggle()
+                    if isSaved {
+                        recipeViewModel.saveRecipe(recipe)
+                    } else {
+                        recipeViewModel.removeRecipe(recipe)
+                    }
+                }){
+                    Image(systemName: isSaved ? "bookmark.fill": "bookmark")
+                }
+            )
         }
     }
 }
+

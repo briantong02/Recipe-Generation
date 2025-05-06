@@ -12,8 +12,8 @@ extension Int: Identifiable { public var id: Int { self } }
 
 struct RecipeRecommendationView: View {
     @ObservedObject var fridgeVM: FridgeViewModel
-    @StateObject private var vm = RecipeRecommendationViewModel()
-    @State private var selectedRecipeID: Int?
+    @ObservedObject var vm : RecipeRecommendationViewModel
+    @State private var selectedRecipe: Recipe?
 
     var body: some View {
         Group {
@@ -26,7 +26,7 @@ struct RecipeRecommendationView: View {
                     .padding()
             } else {
                 List(vm.recipes) { recipe in
-                    Button(action: { selectedRecipeID = recipe.apiID ?? recipe.id.hashValue }) {
+                    Button(action: { selectedRecipe = recipe }) {
                         HStack {
                             AsyncImage(url: recipe.imageURL) { phase in
                                 if let img = phase.image {
@@ -60,8 +60,8 @@ struct RecipeRecommendationView: View {
             print("🍽 new:", newList.map(\.name))
             vm.loadRecipes(from: newList)
         }
-        .sheet(item: $selectedRecipeID) { id in
-            RecipeDetailView(recipeID: id)
+        .sheet(item: $selectedRecipe) { recipe in
+            RecipeDetailView(recipe: recipe, recipeViewModel: vm)
         }
     }
 }

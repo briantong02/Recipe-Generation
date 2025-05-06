@@ -29,7 +29,7 @@ class RecipeService {
             URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
             // URLQueryItem(name: "addRecipeInformation", value: "true"),
             URLQueryItem(name: "number", value: "10"),
-            URLQueryItem(name: "apiKey", value: apiKey)
+            URLQueryItem(name: "apiKey", value: Constant.apiKey)
         ]
         print("🔗 Fetch URL:", components.url!)
         let request = URLRequest(url: components.url!)
