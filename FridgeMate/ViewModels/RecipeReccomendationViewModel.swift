@@ -16,6 +16,7 @@ class RecipeRecommendationViewModel: ObservableObject {
     @Published var recipes: [Recipe] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var selectedCookingTime: CookingTimeFilter = .all
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -56,8 +57,13 @@ class RecipeRecommendationViewModel: ObservableObject {
                 }
             }, receiveValue: { [weak self] recipes in
                 print("✅ received \(recipes.count) recipes")
-
-                self?.recipes = recipes
+                
+                // Filter recipes based on cooking time
+                if let self = self {
+                    self.recipes = recipes.filter { recipe in
+                        self.selectedCookingTime.matches(recipe.cookingTime)
+                    }
+                }
             })
             .store(in: &cancellables)
     }

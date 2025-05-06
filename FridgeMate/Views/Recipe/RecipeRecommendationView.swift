@@ -14,16 +14,30 @@ struct RecipeRecommendationView: View {
     @ObservedObject var fridgeVM: FridgeViewModel
     @StateObject private var vm = RecipeRecommendationViewModel()
     @State private var selectedRecipeID: Int?
+    @State private var isFiltering = false
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            RecipeFilterView(
+                selectedCookingTime: $vm.selectedCookingTime,
+                isFiltering: $isFiltering,
+                onFilter: {
+                    vm.loadRecipes(from: fridgeVM.ingredients)
+                }
+            )
+            .background(Color(.systemBackground))
+            
             if vm.isLoading {
+                Spacer()
                 ProgressView("Loading recipes...")
+                Spacer()
             } else if let error = vm.errorMessage {
+                Spacer()
                 Text("Error: \(error)")
                     .foregroundColor(.red)
                     .multilineTextAlignment(.center)
                     .padding()
+                Spacer()
             } else {
                 List(vm.recipes) { recipe in
                     Button(action: { selectedRecipeID = recipe.apiID ?? recipe.id.hashValue }) {
