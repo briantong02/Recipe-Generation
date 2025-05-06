@@ -27,18 +27,28 @@ class RecipeService {
         )!
         components.queryItems = [
             URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
-            URLQueryItem(name: "addRecipeInformation", value: "true"),
-            URLQueryItem(name: "number", value: "30"),
-            URLQueryItem(name: "apiKey", value: Constant.apiKey)
+            // URLQueryItem(name: "addRecipeInformation", value: "true"),
+            URLQueryItem(name: "number", value: "10"),
+            URLQueryItem(name: "apiKey", value: apiKey)
         ]
         print("🔗 Fetch URL:", components.url!)
         let request = URLRequest(url: components.url!)
         let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
         
         // Perform the network request and decode into [APIRecipe]
         return URLSession.shared.dataTaskPublisher(for: request)
-            .map(\.data)
+            .tryMap { output in
+                if let jsonString = String(data: output.data, encoding: .utf8) {
+                    print("📥 Raw JSON Response:\n\(jsonString)")
+                }
+                
+                if let response = try? JSONDecoder().decode(SpoonacularErrorResponse.self, from: output.data) {
+                    throw SpoonacularAPIError.apiLimitReached(response.message)
+                }
+                
+                return output.data
+            }
             .decode(type: [APIRecipe].self, decoder: decoder)
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
@@ -65,5 +75,22 @@ class RecipeService {
             .decode(type: APIRecipe.self, decoder: decoder)
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
+    }
+}
+
+struct SpoonacularErrorResponse: Codable {
+    let status: String
+    let code: Int
+    let message: String
+}
+
+enum SpoonacularAPIError: LocalizedError {
+    case apiLimitReached(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .apiLimitReached(let message):
+            return "API Error: \(message)"
+        }
     }
 }

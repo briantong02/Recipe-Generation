@@ -162,16 +162,14 @@ struct UserPreferencesView: View {
             }
         }
         .onAppear {
-            DispatchQueue.main.async {
-                let saved = viewModel.userPreferences
-                selectedNationality = saved.nationality ?? .other
-                selectedPreferences = Set(saved.preferences)
-                selectedAllergies = Set(saved.allergies)
-                selectedSkillLevel = saved.cookingSkillLevel
-                selectedCookingTools = saved.cookingTools
-                selectedPrepTime = saved.maxPrepTime
-                isLoaded = true
-            }
+            let saved = viewModel.userPreferences
+            selectedNationality = saved.nationality ?? .other
+            selectedPreferences = Set(saved.preferences)
+            selectedAllergies = Set(saved.allergies)
+            selectedSkillLevel = saved.cookingSkillLevel
+            selectedCookingTools = saved.cookingTools
+            selectedPrepTime = saved.maxPrepTime
+            isLoaded = true
         }
         .navigationTitle("User Preferences")
     }
