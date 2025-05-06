@@ -29,7 +29,7 @@ class RecipeService {
         )!
         components.queryItems = [
             URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
-            // URLQueryItem(name: "addRecipeInformation", value: "true"),
+            URLQueryItem(name: "addRecipeInformation", value: "true"),
             URLQueryItem(name: "number", value: "10"),
             URLQueryItem(name: "apiKey", value: apiKey)
         ]

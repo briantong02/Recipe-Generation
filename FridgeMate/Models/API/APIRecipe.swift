@@ -22,7 +22,7 @@ struct APIRecipe: Codable {
     let title: String
     let image: URL?
     
-    // MARK: - Fields returned by `/recipes/complexSearch?addRecipeInformation=true`
+    // MARK: - Optional fields (used by both endpoints as needed)
     let readyInMinutes: Int?
     let servings: Int?
     let summary: String?
@@ -30,6 +30,7 @@ struct APIRecipe: Codable {
     let dishTypes: [String]?
     let diets: [String]?
     let sourceUrl: URL?
+    
     let extendedIngredients: [APIIngredient]?
     let analyzedInstructions: [APIInstruction]?
     let nutrition: APINutrition?
@@ -40,51 +41,16 @@ struct APIRecipe: Codable {
     let likes: Int?
 }
 
-// MARK: - CodingKeys
-enum CodingKeys: String, CodingKey {
-    case id, title, image
-      
-    // complexSearch
-    case readyInMinutes,
-        servings,
-        summary,
-        cuisines,
-        dishTypes,
-        diets
-    case sourceURL = "sourceUrl"
-    case extendedIngredients,
-        analyzedInstructions,
-        nutrition
-          
-    // findByIngredients
-    case usedIngredientCount,
-         missedIngredientCount,
-         likes
-}
-
+// MARK: - Ingredient
 struct APIIngredient: Codable {
-    let id: Int?
     let name: String
     let original: String?
-    let aisle: String?
     let amount: Double
     let unit: String
-    let measures: Measures?
 }
 
-struct Measures: Codable {
-    let us: MeasureDetail?
-    let metric: MeasureDetail?
-}
-
-struct MeasureDetail: Codable {
-    let amount: Double?
-    let unitShort: String?
-    let unitLong: String?
-}
-
+// MARK: - Instructions
 struct APIInstruction: Codable {
-    let name: String?
     let steps: [APIInstructionStep]
 }
 
@@ -93,6 +59,7 @@ struct APIInstructionStep: Codable {
     let step: String
 }
 
+// MARK: - Nutrition
 struct APINutrition: Codable {
     let nutrients: [APINutrient]
 }
