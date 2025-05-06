@@ -39,6 +39,14 @@ struct APIRecipe: Codable {
     let usedIngredientCount: Int?
     let missedIngredientCount: Int?
     let likes: Int?
+    
+    // CodingKeys
+    enum CodingKeys: String, CodingKey {
+        case id, title, image,
+             readyInMinutes, servings, summary, cuisines, dishTypes, diets,
+             sourceUrl, extendedIngredients, analyzedInstructions, nutrition,
+             usedIngredientCount, missedIngredientCount, likes
+    }
 }
 
 // MARK: - Ingredient

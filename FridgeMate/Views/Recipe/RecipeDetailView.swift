@@ -18,7 +18,7 @@ struct RecipeDetailView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Custom close button at top
+            // Close button at the top
             HStack {
                 Spacer()
                 Button(action: { dismiss() }) {
@@ -42,7 +42,7 @@ struct RecipeDetailView: View {
                         .frame(height: 250).clipped()
                     }
                     
-                    // Title
+                    // Recipe Title
                     if let error = vm.errorMessage {
                         Text("❌ Error: \(error)")
                             .foregroundColor(.red)
@@ -54,8 +54,7 @@ struct RecipeDetailView: View {
                             .padding(.horizontal)
                     }
                     
-                    // Summary
-                    
+                    // Summary without HTML tags
                     if let summary = vm.detail?.summary {
                         Text(summary.replacingOccurrences(of: "<[^>]+>",
                                                           with: "",
@@ -63,6 +62,52 @@ struct RecipeDetailView: View {
                         .padding(.horizontal)
                     }
                     
+                    Divider().padding(.horizontal)
+                    
+                    // General recipe info
+                    VStack(alignment: .leading, spacing: 6) {
+
+                        // Cooking Time
+                        if let time = vm.detail?.readyInMinutes {
+                            Text("⏱ Cooking Time: \(time) min")
+                            
+                            // Difficulty (derived from cooking time)
+                            let difficulty: String = {
+                                if time < 20 {
+                                    return "Easy"
+                                } else if time < 40 {
+                                    return "Medium"
+                                } else {
+                                    return "Hard"
+                                }
+                            }()
+                            
+                            Text("🔥 Difficulty: \(difficulty)")
+                        }
+
+                        // Servings
+                        if let servings = vm.detail?.servings {
+                            Text("🍽 Servings: \(servings)")
+                        }
+
+                        // Diets
+                        if let diets = vm.detail?.diets, !diets.isEmpty {
+                            Text("🧬 Diets: \(diets.joined(separator: ", "))")
+                        }
+
+                        // Cuisine
+                        if let cuisines = vm.detail?.cuisines, !cuisines.isEmpty {
+                            Text("🌍 Cuisine: \(cuisines.joined(separator: ", "))")
+                        }
+
+                        // Dish Types
+                        if let types = vm.detail?.dishTypes, !types.isEmpty {
+                            Text("🍱 Dish Types: \(types.joined(separator: ", "))")
+                        }
+                    }
+                    .font(.subheadline)
+                    .padding(.horizontal)
+
                     Divider().padding(.horizontal)
                     
                     // Ingredients list
@@ -123,7 +168,8 @@ struct RecipeDetailView: View {
                 }
             }
             .onAppear {
-                vm.loadDetail(id: recipeID) }
+                vm.loadDetail(id: recipeID)
+            }
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
         }
