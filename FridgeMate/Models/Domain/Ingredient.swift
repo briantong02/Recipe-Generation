@@ -14,6 +14,7 @@ struct Ingredient: Identifiable, Codable, Equatable {
     var amount: Double
     var unit: Unit
     var expiryDate: Date?
+    var addedDate: Date
 
     init(
         id: UUID = UUID(),
@@ -21,7 +22,8 @@ struct Ingredient: Identifiable, Codable, Equatable {
         category: IngredientCategory,
         amount: Double,
         unit: Unit,
-        expiryDate: Date? = nil
+        expiryDate: Date? = nil,
+        addedDate: Date = Date()
     ) {
         self.id = id
         self.name = name
@@ -29,6 +31,7 @@ struct Ingredient: Identifiable, Codable, Equatable {
         self.amount = amount
         self.unit = unit
         self.expiryDate = expiryDate
+        self.addedDate = addedDate
     }
 }
 
@@ -66,3 +69,4 @@ extension Ingredient {
         )
     }
 }
+
