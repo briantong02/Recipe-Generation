@@ -11,8 +11,8 @@ import Combine
 // Centralised service for Sponacular API interaction
 class RecipeService {
     static let shared = RecipeService()
-    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
-    private let baseURL = URL(string: "https://api.spoonacular.com")!
+//    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
+    private let baseURL = URL(string: Constant.baseURL)!
 
     // Fetch recipes with detailed info based on ingredients
     func fetchRecipes(query ingredients: [String]) -> AnyPublisher<[APIRecipe], Error> {
@@ -29,7 +29,7 @@ class RecipeService {
             URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
             URLQueryItem(name: "addRecipeInformation", value: "true"),
             URLQueryItem(name: "number", value: "30"),
-            URLQueryItem(name: "apiKey", value: apiKey)
+            URLQueryItem(name: "apiKey", value: Constant.apiKey)
         ]
         print("🔗 Fetch URL:", components.url!)
         let request = URLRequest(url: components.url!)
@@ -52,7 +52,7 @@ class RecipeService {
         )!
         components.queryItems = [
             URLQueryItem(name: "includeNutrition", value: "true"),
-            URLQueryItem(name: "apiKey", value: apiKey)
+            URLQueryItem(name: "apiKey", value: Constant.apiKey)
         ]
         let request = URLRequest(url: components.url!)
         

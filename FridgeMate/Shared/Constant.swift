@@ -6,7 +6,6 @@
 //
 
 struct Constant{
-    let baseURL = "https://api.spoonacular.com"
-    let apiKey = "22994c9f12624d09a0a88603226a0410"
-        
+    static let baseURL = "https://api.spoonacular.com"
+    static let apiKey = "22994c9f12624d09a0a88603226a0410"
 }
