@@ -13,8 +13,12 @@ class FridgeViewModel: ObservableObject {
     // MARK: - Published properties for SwiftUI bindings
 
     // The list of ingredients the user has in their fridge
-    @Published var ingredients: [Ingredient] = []
-
+    @Published var ingredients: [Ingredient] = FridgeViewModel.loadIngredientsStatic() {
+        didSet {
+            print("📦 Auto-saving ingredients: \(ingredients.map(\.name))")
+            FridgeViewModel.saveIngredientsStatic(ingredients)
+        }
+    }
     // The user’s saved preferences (cuisine, allergies, etc.)
     @Published var userPreferences: UserPreferences
 
@@ -66,7 +70,8 @@ class FridgeViewModel: ObservableObject {
         findRecipes()
     }
 
-    // Clear all ingredients
+    // ⚠️ Currently unused: Clear all ingredients
+    // Need to implement 'Clear All' button
     func clearIngredients() {
         ingredients.removeAll()
     }
@@ -117,5 +122,36 @@ class FridgeViewModel: ObservableObject {
             )
             .store(in: &cancellables)
     }
-}
 
+
+// MARK: - Persistence
+
+    // Save ingredients to disk (called automatically on change)
+    private static func saveIngredientsStatic(_ ingredients: [Ingredient]) {
+        let url = getIngredientsFileURLStatic()
+        do {
+            let data = try JSONEncoder().encode(ingredients)
+            try data.write(to: url)
+        } catch {
+            print("❌ Failed to save ingredients: \(error)")
+        }
+    }
+
+    // Load ingredients from disk at startup
+    private static func loadIngredientsStatic() -> [Ingredient] {
+        let url = getIngredientsFileURLStatic()
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode([Ingredient].self, from: data)
+        } catch {
+            print("⚠️ No saved ingredients found or failed to decode: \(error)")
+            return []
+        }
+    }
+
+    // File location for saving/loading
+    private static func getIngredientsFileURLStatic() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("ingredients.json")
+    }
+}
