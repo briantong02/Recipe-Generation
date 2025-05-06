@@ -43,10 +43,16 @@ struct RecipeDetailView: View {
                     }
                     
                     // Title
-                    Text(vm.detail?.title ?? "Loading...")
-                        .font(.largeTitle)
-                        .bold()
-                        .padding(.horizontal)
+                    if let error = vm.errorMessage {
+                        Text("❌ Error: \(error)")
+                            .foregroundColor(.red)
+                            .padding()
+                    } else {
+                        Text(vm.detail?.title ?? "Loading...")
+                            .font(.largeTitle)
+                            .bold()
+                            .padding(.horizontal)
+                    }
                     
                     // Summary
                     
