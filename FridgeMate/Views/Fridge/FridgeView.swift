@@ -13,6 +13,10 @@ struct FridgeView: View {
     @State private var showingManualAddSheet = false
     @State private var selectedCategory: IngredientCategory?
     @State private var searchText = ""
+    @State private var selectedIngredient: Ingredient?
+    @State private var showSortSheet = false
+    @State private var selectedSort: SortOption? = nil
+    @State private var sortOrder: SortOrder = .ascending
     
     private let columns = [
         GridItem(.flexible()),
@@ -28,6 +32,24 @@ struct FridgeView: View {
         
         if !searchText.isEmpty {
             result = result.filter { $0.name.lowercased().contains(searchText.lowercased()) }
+        }
+        
+        // 정렬 옵션이 선택된 경우만 정렬
+        if let selectedSort = selectedSort {
+            switch selectedSort {
+            case .expiration:
+                result.sort { sortOrder == .ascending ?
+                    ($0.expiryDate ?? .distantFuture) < ($1.expiryDate ?? .distantFuture) :
+                    ($0.expiryDate ?? .distantFuture) > ($1.expiryDate ?? .distantFuture) }
+            case .addedDate:
+                result.sort { sortOrder == .ascending ?
+                    $0.addedDate < $1.addedDate :
+                    $0.addedDate > $1.addedDate }
+            case .quantity:
+                result.sort { sortOrder == .ascending ?
+                    $0.amount < $1.amount :
+                    $0.amount > $1.amount }
+            }
         }
         
         return result
@@ -67,6 +89,38 @@ struct FridgeView: View {
                 }
                 .padding(.bottom)
                 
+                // 카테고리 헤더 + Sort by 버튼
+                HStack {
+                    Text(selectedCategory?.rawValue ?? "All")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Button(action: { showSortSheet = true }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.up.arrow.down")
+                            Text("Sort by")
+                        }
+                        .font(.subheadline)
+                    }
+                    .padding(.trailing)
+                    .actionSheet(isPresented: $showSortSheet) {
+                        ActionSheet(
+                            title: Text("Sort by"),
+                            message: nil,
+                            buttons: [
+                                .default(Text("Expiration")) { selectedSort = .expiration },
+                                .default(Text("Added Date")) { selectedSort = .addedDate },
+                                .default(Text("Quantity")) { selectedSort = .quantity },
+                                .default(Text(sortOrder == .ascending ? "Descending" : "Ascending")) {
+                                    sortOrder = (sortOrder == .ascending ? .descending : .ascending)
+                                },
+                                .cancel()
+                            ]
+                        )
+                    }
+                }
+                .padding(.horizontal)
+                
                 if filteredIngredients.isEmpty {
                     EmptyFridgeView(showingManualAddSheet: $showingManualAddSheet, showingQuickAddSheet: $showingQuickAddSheet)
                 } else {
@@ -79,6 +133,9 @@ struct FridgeView: View {
                                         LazyVGrid(columns: columns, spacing: 16) {
                                             ForEach(ingredients) { ingredient in
                                                 IngredientCard(ingredient: ingredient)
+                                                    .onTapGesture {
+                                                        selectedIngredient = ingredient
+                                                    }
                                             }
                                         }
                                         .padding(.horizontal)
@@ -108,6 +165,9 @@ struct FridgeView: View {
             }
             .sheet(isPresented: $showingManualAddSheet) {
                 AddIngredientView(viewModel: viewModel)
+            }
+            .sheet(item: $selectedIngredient) { ingredient in
+                EditIngredientView(viewModel: viewModel, ingredient: ingredient)
             }
         }
     }
@@ -182,6 +242,10 @@ struct IngredientCard: View {
                 }
                 .font(.caption)
                 .foregroundColor(expiryStatus.color)
+            } else {
+                Text("No expiry date")
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -327,6 +391,19 @@ struct SearchBar: View {
         .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(10)
     }
+}
+
+enum SortOption: String, CaseIterable, Identifiable {
+    case expiration = "Expiration"
+    case addedDate = "Added Date"
+    case quantity = "Quantity"
+    var id: String { self.rawValue }
+}
+
+enum SortOrder: String, CaseIterable, Identifiable {
+    case ascending = "Ascending"
+    case descending = "Descending"
+    var id: String { self.rawValue }
 }
 
 #Preview {
