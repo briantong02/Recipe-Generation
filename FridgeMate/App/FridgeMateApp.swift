@@ -18,7 +18,6 @@ struct FridgeMateApp: App {
             if isShowingSplash {
                 // Splash screen
                 SplashView(isActive: $isShowingSplash)
-                    .environmentObject(viewModel)
             } else {
                 // Main TabView
                 TabView(selection: $selectedTab) {
@@ -40,6 +39,7 @@ struct FridgeMateApp: App {
                     .tabItem { Label("Preferences", systemImage: "person") }
                     .tag(2)
                 }
+                .environmentObject(viewModel)
             }
         }
     }

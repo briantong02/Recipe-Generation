@@ -20,8 +20,12 @@ class FridgeViewModel: ObservableObject {
         }
     }
     // The user’s saved preferences (cuisine, allergies, etc.)
-    @Published var userPreferences: UserPreferences
-
+    @Published var userPreferences: UserPreferences = FridgeViewModel.loadPreferencesStatic() {
+        didSet {
+            FridgeViewModel.savePreferencesStatic(userPreferences)
+        }
+    }
+    
     // Recipes recommended based on the current fridge contents
     @Published var recommendedRecipes: [Recipe] = []
 
@@ -35,20 +39,6 @@ class FridgeViewModel: ObservableObject {
 
     // Store Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
-
-    // MARK: - Initializer
-
-    init() {
-        // Initialize with reasonable defaults
-        self.userPreferences = UserPreferences(
-            nationality: .other,
-            preferences: [],
-            allergies: [],
-            cookingSkillLevel: .beginner,
-            cookingTools: [],
-            maxPrepTime: .quick
-        )
-    }
 
     // MARK: - Ingredient Management
 
@@ -154,4 +144,40 @@ class FridgeViewModel: ObservableObject {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             .appendingPathComponent("ingredients.json")
     }
+    
+    // MARK: - Persistence for User Preferences
+
+    private static func savePreferencesStatic(_ preferences: UserPreferences) {
+        let url = getPreferencesFileURLStatic()
+        do {
+            let data = try JSONEncoder().encode(preferences)
+            try data.write(to: url)
+        } catch {
+            print("❌ Failed to save user preferences: \(error)")
+        }
+    }
+
+    private static func loadPreferencesStatic() -> UserPreferences {
+        let url = getPreferencesFileURLStatic()
+        do {
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(UserPreferences.self, from: data)
+        } catch {
+            print("⚠️ No saved user preferences found or failed to decode: \(error)")
+            return UserPreferences(
+                nationality: .other,
+                preferences: [],
+                allergies: [],
+                cookingSkillLevel: .beginner,
+                cookingTools: [],
+                maxPrepTime: .quick
+            )
+        }
+    }
+
+    private static func getPreferencesFileURLStatic() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("user_preferences.json")
+    }
 }
+
