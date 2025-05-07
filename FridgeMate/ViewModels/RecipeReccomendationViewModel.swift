@@ -16,6 +16,7 @@ class RecipeRecommendationViewModel: ObservableObject {
     @Published var recipes: [Recipe] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var selectedCookingTime: CookingTimeFilter = .all
     
     @Published var savedRecipes: [Recipe] = []
     
@@ -33,26 +34,51 @@ class RecipeRecommendationViewModel: ObservableObject {
     // Load recipes based on fridge ingredients
     func loadRecipes(from ingredients: [Ingredient]) {
         print("⚙️ loadRecipes called with:", ingredients.map(\.name))
-        let names = ingredients.map { $0.name }
+        guard !ingredients.isEmpty else {
+            self.recipes = []
+            return
+        }
+
+        let ingredientNames = ingredients.map { $0.name }
+
         isLoading = true
         errorMessage = nil
-        
-        RecipeService.shared
-            .fetchRecipes(query: names)
-            .map { apiList in apiList.map(Recipe.init(api:)) }
-            .sink { [weak self] completion in
+
+        // Step 1: fetch simplified recipe results
+        RecipeService.shared.fetchRecipes(query: ingredientNames)
+            .flatMap { simpleResults -> AnyPublisher<[Recipe], Error> in
+                let ids = simpleResults.compactMap { $0.id }
+                guard !ids.isEmpty else {
+                    return Just([])
+                        .setFailureType(to: Error.self)
+                        .eraseToAnyPublisher()
+                }
+                // Step 2: bulk fetch full info for these IDs
+                return RecipeService.shared.fetchBulkRecipeDetails(ids: ids)
+                    .map { fullDetails in
+                        fullDetails.map { Recipe(api: $0) }
+                    }
+                    .eraseToAnyPublisher()
+            }
+            .sink(receiveCompletion: { [weak self] completion in
                 print("📡 completion:", completion)
                 self?.isLoading = false
-                if case let .failure(error) = completion {
+                if case .failure(let error) = completion {
                     self?.errorMessage = error.localizedDescription
                 }
-            } receiveValue: { [weak self] recipes in
+            }, receiveValue: { [weak self] recipes in
                 print("✅ received \(recipes.count) recipes")
-                self?.recipes = recipes
-            }
+                
+                // Filter recipes based on cooking time
+                if let self = self {
+                    self.recipes = recipes.filter { recipe in
+                        self.selectedCookingTime.matches(recipe.cookingTime)
+                    }
+                }
+            })
             .store(in: &cancellables)
     }
-    
+
     func saveRecipe(_ recipe: Recipe) {
         if !savedRecipes.contains(where: { $0.id == recipe.id }) {
             savedRecipes.append(recipe)
@@ -86,6 +112,5 @@ class RecipeRecommendationViewModel: ObservableObject {
             savedRecipes = []
         }
     }
-    
 }
 

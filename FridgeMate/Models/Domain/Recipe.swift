@@ -7,7 +7,7 @@
 
 import Foundation
 
-// The app’s internal recipe model
+// MARK: - Internal Recipe Model
 struct Recipe: Identifiable, Codable {
     let id: UUID
     var apiID: Int?
@@ -20,8 +20,6 @@ struct Recipe: Identifiable, Codable {
     var difficulty: Difficulty
     var cuisine: Nationality
     var foodPreferences: [FoodPreference]
-    var allergens: [Allergy]
-    var tags: [String]
     var ingredients: [RecipeIngredient]
     var instructions: [String]
     
@@ -35,13 +33,11 @@ struct Recipe: Identifiable, Codable {
         sourceURL: URL? = nil,
         cookingTime: Int,
         servings: Int? = nil,
-        difficulty: Difficulty,
-        cuisine: Nationality,
-        foodPreferences: [FoodPreference],
-        allergens: [Allergy],
-        tags: [String],
-        ingredients: [RecipeIngredient],
-        instructions: [String]
+        difficulty: Difficulty = .medium,
+        cuisine: Nationality = .other,
+        foodPreferences: [FoodPreference] = [],
+        ingredients: [RecipeIngredient] = [],
+        instructions: [String] = []
     ) {
         self.id = id
         self.apiID = apiID
@@ -54,62 +50,47 @@ struct Recipe: Identifiable, Codable {
         self.difficulty = difficulty
         self.cuisine = cuisine
         self.foodPreferences = foodPreferences
-        self.allergens = allergens
-        self.tags = tags
         self.ingredients = ingredients
         self.instructions = instructions
     }
 }
 
-// Maps an APIRecipe (from Spoonacular) into the app’s Recipe
+// MARK: - Init from APIRecipe
 extension Recipe {
-    // Initialize internal Recipe from APIRecipe
     init(api: APIRecipe) {
-        // 1. Map ingredients
-        let mappedIngredients = (api.extendedIngredients ?? []).map { ing in
-            RecipeIngredient(
-                name: ing.name,
-                amount: ing.amount,
-                unit: Unit(rawValue: ing.unit) ?? .gram,
-                isOptional: ing.original?.lowercased().contains("optional") ?? false
-            )
+        let mappedIngredients: [RecipeIngredient]
+        if let ingredients = api.extendedIngredients {
+            mappedIngredients = ingredients.map {
+                RecipeIngredient(
+                    name: $0.name,
+                    amount: $0.amount,
+                    unit: Unit(rawValue: $0.unit) ?? .gram,
+                    isOptional: $0.original?.lowercased().contains("optional") ?? false
+                )
+            }
+        } else {
+            mappedIngredients = []
         }
 
-        // 2. Map instructions (first group’s steps)
-        let mappedInstructions: [String] = api.analyzedInstructions?
-            .first?
-            .steps
-            .map { $0.step } ?? []
+        let mappedInstructions = api.analyzedInstructions?
+            .first?.steps.map { $0.step } ?? []
 
-        // 3. Convert image/source URLs
-        let imageURL: URL?     = api.image
-        let sourceURL: URL?    = api.sourceUrl
+        let cuisine = Nationality(rawValue: (api.cuisines?.first ?? "Other")) ?? .other
+        let preferences = (api.diets ?? []).compactMap {
+            FoodPreference(rawValue: $0.capitalized)
+        }
 
-        // 4. optional string arrays
-        let cuisines = api.cuisines ?? []
-        let diets = api.diets    ?? []
-        let tags = api.dishTypes ?? []
-
-        // 5. map enums
-        let cuisine = Nationality(rawValue: cuisines.first ?? "Other") ?? .other
-        let prefs   = diets.compactMap { FoodPreference(rawValue: $0.capitalized) }
-
-        let cookingTime = api.readyInMinutes ?? 0
-        
-        // 6. Initialize with safe defaults
         self.init(
             apiID: api.id,
             name: api.title,
             description: api.summary ?? "",
-            imageURL: imageURL,
-            sourceURL: sourceURL,
-            cookingTime: cookingTime,
+            imageURL: api.image,
+            sourceURL: api.sourceUrl,
+            cookingTime: api.readyInMinutes ?? 0,
             servings: api.servings,
             difficulty: .medium,
             cuisine: cuisine,
-            foodPreferences: prefs,
-            allergens: [],
-            tags: tags,
+            foodPreferences: preferences,
             ingredients: mappedIngredients,
             instructions: mappedInstructions
         )
@@ -139,7 +120,7 @@ struct RecipeIngredient: Identifiable, Codable {
     }
 }
 
-// Difficulty levels (you can expand/use user preferences)
+// MARK: - Difficulty Enum
 enum Difficulty: String, Codable, CaseIterable {
     case easy = "Easy"
     case medium = "Medium"
