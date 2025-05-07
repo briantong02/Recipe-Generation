@@ -12,7 +12,7 @@ struct RecipeDetailView: View {
     @ObservedObject var recipeViewModel: RecipeRecommendationViewModel
     @StateObject private var vm = RecipeDetailViewModel()
     @State private var isSummaryExpanded = false
-
+    
     @Environment(\.dismiss) private var dismiss
     @State private var isSaved: Bool = false
     
@@ -78,7 +78,7 @@ struct RecipeDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
-
+                        
                         // Servings
                         if let servings = vm.detail?.servings {
                             Label {
@@ -89,7 +89,7 @@ struct RecipeDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
-
+                        
                         // Diets
                         if let diets = vm.detail?.diets, !diets.isEmpty {
                             Label {
@@ -100,7 +100,7 @@ struct RecipeDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
-
+                        
                         // Cuisine
                         if let cuisines = vm.detail?.cuisines, !cuisines.isEmpty {
                             Label {
@@ -111,7 +111,7 @@ struct RecipeDetailView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
-
+                        
                         // Dish Types
                         if let types = vm.detail?.dishTypes, !types.isEmpty {
                             Label {
@@ -127,15 +127,15 @@ struct RecipeDetailView: View {
                     .padding(.horizontal)
                     
                     // Summary without HTML tags
-//                    if let summary = vm.detail?.summary {
-//                        Text(summary.replacingOccurrences(of: "<[^>]+>",
-//                                                          with: "",
-//                                                          options: .regularExpression))
-//                            .font(.body)
-//                            .foregroundColor(.secondary)
-//                            .padding(.horizontal)
-//                    }
-//                    
+                    //                    if let summary = vm.detail?.summary {
+                    //                        Text(summary.replacingOccurrences(of: "<[^>]+>",
+                    //                                                          with: "",
+                    //                                                          options: .regularExpression))
+                    //                            .font(.body)
+                    //                            .foregroundColor(.secondary)
+                    //                            .padding(.horizontal)
+                    //                    }
+                    //
                     // Summary Section
                     if let summary = vm.detail?.summary {
                         VStack(alignment: .leading, spacing: 8) {
@@ -154,7 +154,7 @@ struct RecipeDetailView: View {
                                         .foregroundColor(.gray)
                                 }
                             }
-
+                            
                             // 토글된 내용
                             if isSummaryExpanded {
                                 Text(summary.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
@@ -250,19 +250,18 @@ struct RecipeDetailView: View {
                                     .padding(.horizontal)
                                 }
                             }
-                            .padding(.horizontal)
                         }
                     }
+                    
                 }
+                .padding(24)
+                
             }
-            .onAppear {
-                vm.loadDetail(id: recipe.apiID!)
-                isSaved = recipeViewModel.isRecipeSaved(recipe)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Back") { dismiss() },
-                trailing: Button(action: {
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar{
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
                     isSaved.toggle()
                     if isSaved {
                         recipeViewModel.saveRecipe(recipe)
@@ -272,8 +271,34 @@ struct RecipeDetailView: View {
                 }){
                     Image(systemName: isSaved ? "bookmark.fill": "bookmark")
                 }
-            )
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") { dismiss() }
+            }
+        }
+        .onAppear {
+            vm.loadDetail(id: recipe.apiID!)
+            isSaved = recipeViewModel.isRecipeSaved(recipe)
         }
     }
 }
+
+//    .onAppear {
+//        vm.loadDetail(id: recipe.apiID!)
+//        isSaved = recipeViewModel.isRecipeSaved(recipe)
+//    }
+//    .navigationBarTitleDisplayMode(.inline)
+//    .navigationBarItems(
+//        leading: Button("Back") { dismiss() },
+//        trailing: Button(action: {
+//            isSaved.toggle()
+//            if isSaved {
+//                recipeViewModel.saveRecipe(recipe)
+//            } else {
+//                recipeViewModel.removeRecipe(recipe)
+//            }
+//        }){
+//            Image(systemName: isSaved ? "bookmark.fill": "bookmark")
+//        }
+//    )
 
