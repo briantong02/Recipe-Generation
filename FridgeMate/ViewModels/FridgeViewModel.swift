@@ -29,12 +29,10 @@ class FridgeViewModel: ObservableObject {
     // Any error message from the last fetch
     @Published var errorMessage: String?
 
-    // MARK: - Private
 
     // Store Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
 
-    // MARK: - Ingredient Management
 
     // Add a single ingredient to the fridge
     func addIngredient(_ ingredient: Ingredient) {
@@ -59,9 +57,6 @@ class FridgeViewModel: ObservableObject {
     func clearIngredients() {
         ingredients.removeAll()
     }
-
-
-    // MARK: - Recipe Recommendation
 
     // Fetch recommendations from Spoonacular based on current `ingredients`
     func findRecipes() {
@@ -101,8 +96,6 @@ class FridgeViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
-
-// MARK: - Persistence
 
     // Save ingredients to disk (called automatically on change)
     private static func saveIngredientsStatic(_ ingredients: [Ingredient]) {
