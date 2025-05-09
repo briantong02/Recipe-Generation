@@ -8,34 +8,29 @@
 import SwiftUI
 
 struct RecipeDetailView: View {
-    let recipeID: Int
+    let recipe: Recipe
+    @ObservedObject var recipeViewModel: RecipeRecommendationViewModel
     @StateObject private var vm = RecipeDetailViewModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var isSaved: Bool = false
     @State private var isSummaryExpanded = false
 
-    @Environment(\.dismiss) private var dismiss
-    
-    init(recipeID: Int) {
-        self.recipeID = recipeID
-    }
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Recipe image
-                if let url = vm.detail?.image {
+            VStack(alignment: .leading, spacing: 24) {
+                //Image
+                if let url = vm.detail?.image ?? recipe.imageURL {
                     AsyncImage(url: url) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        image.resizable().scaledToFill()
                     } placeholder: {
-                        Rectangle()
-                            .fill(Color(.systemGray6))
+                        Color(.systemGray5)
                     }
-                    .frame(height: 300)
+                    .frame(height: 250)
                     .clipped()
                 }
                 
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 12) {
                     // Recipe Title
                     if let error = vm.errorMessage {
                         Text("Error: \(error)")
@@ -137,7 +132,7 @@ struct RecipeDetailView: View {
 //                            .foregroundColor(.secondary)
 //                            .padding(.horizontal)
 //                    }
-//                    
+//
                     // Summary Section
                     if let summary = vm.detail?.summary {
                         VStack(alignment: .leading, spacing: 8) {
@@ -256,22 +251,35 @@ struct RecipeDetailView: View {
                     }
                    
                 }
-                .padding(24)
-
+                .padding(8)
             }
         }
+        .navigationTitle("Recipe Detail")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if let apiID = recipe.apiID {
+                vm.loadDetail(id: apiID)
+            }
+            isSaved = recipeViewModel.isRecipeSaved(recipe)
+        }
         .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Back") { dismiss() }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                        .font(.title3)
+                Button(action: {
+                    isSaved.toggle()
+                    if isSaved {
+                        recipeViewModel.saveRecipe(recipe)
+                    } else {
+                        recipeViewModel.removeRecipe(recipe)
+                    }
+                }) {
+                    Image(systemName: isSaved ? "bookmark.fill": "bookmark")
                 }
             }
         }
-        .onAppear {
-            vm.loadDetail(id: recipeID)
-        }
     }
 }
+
+

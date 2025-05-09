@@ -12,20 +12,18 @@ extension Int: Identifiable { public var id: Int { self } }
 
 struct RecipeRecommendationView: View {
     @ObservedObject var fridgeVM: FridgeViewModel
-    @StateObject private var vm = RecipeRecommendationViewModel()
-    @State private var selectedRecipeID: Int?
-    @State private var isFiltering = false
+    @ObservedObject var vm : RecipeRecommendationViewModel
+    @State private var selectedRecipe: Recipe?
 
     var body: some View {
         VStack(spacing: 0) {
+            // Recommendation 제목 아래에 항상 고정
             RecipeFilterView(
                 selectedCookingTime: $vm.selectedCookingTime,
-                isFiltering: $isFiltering,
                 onFilter: {
                     vm.loadRecipes(from: fridgeVM.ingredients)
                 }
             )
-            .background(Color(.systemBackground))
             
             if vm.isLoading {
                 Spacer()
@@ -40,7 +38,7 @@ struct RecipeRecommendationView: View {
                 Spacer()
             } else {
                 List(vm.recipes) { recipe in
-                    Button(action: { selectedRecipeID = recipe.apiID ?? recipe.id.hashValue }) {
+                    Button(action: { selectedRecipe = recipe }) {
                         HStack {
                             AsyncImage(url: recipe.imageURL) { phase in
                                 if let img = phase.image {
@@ -55,6 +53,9 @@ struct RecipeRecommendationView: View {
                                 Text("⏱ \(recipe.cookingTime) min")
                                     .font(.subheadline).foregroundColor(.secondary)
                             }
+                            Spacer()
+                            Image(systemName: vm.isRecipeSaved(recipe) ? "bookmark.fill" : "bookmark")
+                                .foregroundColor(vm.isRecipeSaved(recipe) ? .blue : .gray)
                         }
                     }
                 }
@@ -74,8 +75,10 @@ struct RecipeRecommendationView: View {
             print("🍽 new:", newList.map(\.name))
             vm.loadRecipes(from: newList)
         }
-        .sheet(item: $selectedRecipeID) { id in
-            RecipeDetailView(recipeID: id)
+        .sheet(item: $selectedRecipe) { recipe in
+            NavigationStack {
+                RecipeDetailView(recipe: recipe, recipeViewModel: vm)
+            }
         }
     }
 }

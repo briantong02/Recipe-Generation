@@ -7,9 +7,10 @@
 
 struct Constant{
     static let baseURL = "https://api.spoonacular.com"
-    // static let apiKey = "22994c9f12624d09a0a88603226a0410"
-    // static let apiKey = "2b19ca7f77454abc9694f5b7d62f1c56"
-    // static let apiKey = "8ecc41d2c28e4dcfbe740ea23adb2449"
-    static let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
-}
+//     static let apiKey = "22994c9f12624d09a0a88603226a0410"
+//     static let apiKey = "da90fd069e6447ceb64d6846c5f57195"
+//    static let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
+//    static let apiKey = "403e9def58104d7bb4d3bc942147fce1"
+    static let apiKey = "7213f42e4cd04f6a99edca7a6fedd509"
 
+}

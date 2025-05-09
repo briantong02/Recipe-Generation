@@ -1,39 +1,59 @@
+//
+//  RecipeFilterView.swift
+//  FridgeMate
+//
+//  Created by Chaeyeon Yu on 29/4/2025.
+//
+
 import SwiftUI
 
 struct RecipeFilterView: View {
     @Binding var selectedCookingTime: CookingTimeFilter
-    @Binding var isFiltering: Bool
-    
     var onFilter: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text("Cooking Time")
-                    .font(.headline)
-                
-                Picker("Select cooking time", selection: $selectedCookingTime) {
-                    ForEach(CookingTimeFilter.allCases, id: \.self) { filter in
-                        Text(filter.displayText).tag(filter)
+        HStack(spacing: 12) {
+            Text("Cooking Time")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            Menu {
+                ForEach(CookingTimeFilter.allCases, id: \.self) { filter in
+                    Button(action: {
+                        selectedCookingTime = filter
+                    }) {
+                        HStack {
+                            Text(filter.rawValue)
+                            if selectedCookingTime == filter {
+                                Image(systemName: "checkmark")
+                            }
+                        }
                     }
                 }
-                .pickerStyle(MenuPickerStyle())
-                
-                Spacer()
-                
-                Button(action: {
-                    onFilter()
-                }) {
-                    Text("Filter")
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color.blue)
-                        .cornerRadius(8)
+            } label: {
+                HStack(spacing: 2) {
+                    Text(selectedCookingTime.rawValue)
+                        .foregroundColor(Color.blue)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(Color.blue)
                 }
             }
-            .padding(.horizontal)
+//            .padding(.vertical, 2)
+            Spacer(minLength: 0)
+            Button(action: {
+                onFilter()
+            }) {
+                Text("Filter")
+                    .foregroundColor(.white)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
         }
+        .padding(.horizontal)
         .padding(.vertical, 8)
         .background(Color(.systemBackground))
     }
@@ -69,7 +89,6 @@ enum CookingTimeFilter: String, CaseIterable {
 #Preview {
     RecipeFilterView(
         selectedCookingTime: .constant(.all),
-        isFiltering: .constant(false),
         onFilter: {}
     )
-} 
+}

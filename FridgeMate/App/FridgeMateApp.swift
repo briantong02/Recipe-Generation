@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct FridgeMateApp: App {
     @StateObject private var viewModel = FridgeViewModel()
+    @StateObject private var recipeViewModel = RecipeRecommendationViewModel()
     @State private var selectedTab: Int = 0
     @State private var isShowingSplash = true
 
@@ -28,15 +29,18 @@ struct FridgeMateApp: App {
                     .tag(0)
 
                     NavigationView {
-                        RecipeRecommendationView(fridgeVM: viewModel)
+                        RecipeRecommendationView(fridgeVM: viewModel, vm: recipeViewModel)
                     }
                     .tabItem { Label("Recipes", systemImage: "book") }
                     .tag(1)
 
                     NavigationView {
-                        UserPreferencesView(viewModel: viewModel, selectedTab: $selectedTab)
+//                        UserPreferencesView(viewModel: viewModel, selectedTab: $selectedTab)
+                        SavedRecipeView(
+                            viewModel: recipeViewModel
+                        )
                     }
-                    .tabItem { Label("Preferences", systemImage: "person") }
+                    .tabItem { Label("Saved", systemImage: "bookmark") }
                     .tag(2)
                 }
                 .environmentObject(viewModel)

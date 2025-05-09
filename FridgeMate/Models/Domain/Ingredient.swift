@@ -19,7 +19,7 @@ struct Ingredient: Identifiable, Codable, Equatable {
     init(
         id: UUID = UUID(),
         name: String,
-        category: IngredientCategory = .other,
+        category: IngredientCategory,
         amount: Double,
         unit: Unit,
         expiryDate: Date? = nil,
@@ -64,8 +64,8 @@ extension Ingredient {
         self.init(
             name: api.name,
             category: .other,
-            amount: 1,
-            unit: .piece
+            amount: api.amount,
+            unit: Unit(rawValue: api.unit) ?? .gram
         )
     }
 }
