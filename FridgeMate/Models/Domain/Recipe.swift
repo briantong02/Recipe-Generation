@@ -18,9 +18,6 @@ struct Recipe: Identifiable, Codable {
     var cookingTime: Int
     var servings: Int?
     var difficulty: Difficulty
-    var cuisine: Nationality
-    var foodPreferences: [FoodPreference]
-    var allergens: [Allergy]
     var tags: [String]
     var ingredients: [RecipeIngredient]
     var instructions: [String]
@@ -36,9 +33,6 @@ struct Recipe: Identifiable, Codable {
         cookingTime: Int,
         servings: Int? = nil,
         difficulty: Difficulty,
-        cuisine: Nationality,
-        foodPreferences: [FoodPreference],
-        allergens: [Allergy],
         tags: [String],
         ingredients: [RecipeIngredient],
         instructions: [String]
@@ -52,9 +46,6 @@ struct Recipe: Identifiable, Codable {
         self.cookingTime = cookingTime
         self.servings = servings
         self.difficulty = difficulty
-        self.cuisine = cuisine
-        self.foodPreferences = foodPreferences
-        self.allergens = allergens
         self.tags = tags
         self.ingredients = ingredients
         self.instructions = instructions
@@ -86,17 +77,12 @@ extension Recipe {
         let sourceURL: URL?    = api.sourceUrl
 
         // 4. optional string arrays
-        let cuisines = api.cuisines ?? []
-        let diets = api.diets    ?? []
+       
         let tags = api.dishTypes ?? []
 
-        // 5. map enums
-        let cuisine = Nationality(rawValue: cuisines.first ?? "Other") ?? .other
-        let prefs   = diets.compactMap { FoodPreference(rawValue: $0.capitalized) }
-
         let cookingTime = api.readyInMinutes ?? 0
-        
-        // 6. Initialize with safe defaults
+
+        // 5. Intialize recipe
         self.init(
             apiID: api.id,
             name: api.title,
@@ -106,9 +92,6 @@ extension Recipe {
             cookingTime: cookingTime,
             servings: api.servings,
             difficulty: .medium,
-            cuisine: cuisine,
-            foodPreferences: prefs,
-            allergens: [],
             tags: tags,
             ingredients: mappedIngredients,
             instructions: mappedInstructions

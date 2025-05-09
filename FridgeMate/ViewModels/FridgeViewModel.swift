@@ -19,12 +19,6 @@ class FridgeViewModel: ObservableObject {
             FridgeViewModel.saveIngredientsStatic(ingredients)
         }
     }
-    // The user’s saved preferences (cuisine, allergies, etc.)
-    @Published var userPreferences: UserPreferences = FridgeViewModel.loadPreferencesStatic() {
-        didSet {
-            FridgeViewModel.savePreferencesStatic(userPreferences)
-        }
-    }
     
     // Recipes recommended based on the current fridge contents
     @Published var recommendedRecipes: [Recipe] = []
@@ -66,12 +60,6 @@ class FridgeViewModel: ObservableObject {
         ingredients.removeAll()
     }
 
-    // MARK: - User Preferences
-
-    // Update the user’s cuisine/allergy preferences
-    func updateUserPreferences(_ preferences: UserPreferences) {
-        userPreferences = preferences
-    }
 
     // MARK: - Recipe Recommendation
 
@@ -143,36 +131,6 @@ class FridgeViewModel: ObservableObject {
     private static func getIngredientsFileURLStatic() -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             .appendingPathComponent("ingredients.json")
-    }
-    
-    // MARK: - Persistence for User Preferences
-
-    private static func savePreferencesStatic(_ preferences: UserPreferences) {
-        let url = getPreferencesFileURLStatic()
-        do {
-            let data = try JSONEncoder().encode(preferences)
-            try data.write(to: url)
-        } catch {
-            print("❌ Failed to save user preferences: \(error)")
-        }
-    }
-
-    private static func loadPreferencesStatic() -> UserPreferences {
-        let url = getPreferencesFileURLStatic()
-        do {
-            let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode(UserPreferences.self, from: data)
-        } catch {
-            print("⚠️ No saved user preferences found or failed to decode: \(error)")
-            return UserPreferences(
-                nationality: .other,
-                preferences: [],
-                allergies: [],
-                cookingSkillLevel: .beginner,
-                cookingTools: [],
-                maxPrepTime: .quick
-            )
-        }
     }
 
     private static func getPreferencesFileURLStatic() -> URL {
