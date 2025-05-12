@@ -51,7 +51,7 @@ struct SavedRecipeView: View {
                 }
                 .listStyle(PlainListStyle())
             }
-        }.navigationTitle("Saved Recipies")
+        }.navigationTitle("Saved Recipes")
             .sheet(item: $selectedRecipe) { recipe in
                 NavigationStack {
                     RecipeDetailView(recipe: recipe, recipeViewModel: viewModel)
