@@ -136,7 +136,7 @@ struct RecipeDetailView: View {
                     // Summary Section
                     if let summary = vm.detail?.summary {
                         VStack(alignment: .leading, spacing: 8) {
-                            // 토글 헤더
+                    
                             Button(action: {
                                 withAnimation {
                                     isSummaryExpanded.toggle()
@@ -152,7 +152,6 @@ struct RecipeDetailView: View {
                                 }
                             }
 
-                            // 토글된 내용
                             if isSummaryExpanded {
                                 Text(summary.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression))
                                     .font(.body)
@@ -268,12 +267,12 @@ struct RecipeDetailView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
-                    isSaved.toggle()
                     if isSaved {
-                        recipeViewModel.saveRecipe(recipe)
-                    } else {
                         recipeViewModel.removeRecipe(recipe)
+                    } else {
+                        recipeViewModel.saveRecipe(recipe)
                     }
+                    isSaved.toggle()
                 }) {
                     Image(systemName: isSaved ? "bookmark.fill": "bookmark")
                 }

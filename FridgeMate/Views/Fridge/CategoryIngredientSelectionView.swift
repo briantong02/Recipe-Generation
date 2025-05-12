@@ -104,7 +104,7 @@ struct CategoryIngredientSelectionView: View {
             .toolbar {
                 // Save button to sync selections with fridge
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Add \(selections.count)") {
+                    Button("Save") {
                         // 1. Remove unselected ingredients
                         let toRemove = viewModel.ingredients
                             .filter { !selections.contains($0.name) }
@@ -128,7 +128,6 @@ struct CategoryIngredientSelectionView: View {
 
                         dismiss()
                     }
-                    .disabled(selections.isEmpty)
                 }
 
                 // Cancel button to dismiss without changes
@@ -139,16 +138,12 @@ struct CategoryIngredientSelectionView: View {
         }
     }
 
-    // MARK: - Helper
-
-    /// Determine the category for a given ingredient name
+    // Determine the category for a given ingredient name
     private func deriveCategory(from name: String) -> IngredientCategory {
         IngredientCategory.allCases
             .first { ingredientMap[$0]?.contains(name) == true }
             ?? .other
     }
-
-    // MARK: - Subview
 
     fileprivate struct CategorySection: View {
         let category: IngredientCategory

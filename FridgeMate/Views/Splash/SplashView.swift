@@ -29,7 +29,6 @@ struct SplashView: View {
                         }
                     }
                 
-                
                 // App title on splash screen
                 Text("Fridge Mate")
                     .font(.largeTitle)

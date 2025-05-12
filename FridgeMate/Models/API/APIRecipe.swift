@@ -17,12 +17,11 @@ struct SpoonacularRecipeResponse: Codable {
 
 // Unified model covering both detail & ingredient-search results
 struct APIRecipe: Codable {
-    // MARK: - Common fields
+
     let id: Int
     let title: String
     let image: URL?
-    
-    // MARK: - Optional fields (used by both endpoints as needed)
+
     let readyInMinutes: Int?
     let servings: Int?
     let summary: String?
@@ -35,7 +34,6 @@ struct APIRecipe: Codable {
     let analyzedInstructions: [APIInstruction]?
     let nutrition: APINutrition?
     
-    // MARK: - Fields returned by `/recipes/findByIngredients`
     let usedIngredientCount: Int?
     let missedIngredientCount: Int?
     let likes: Int?
@@ -49,7 +47,6 @@ struct APIRecipe: Codable {
     }
 }
 
-// MARK: - Ingredient
 struct APIIngredient: Codable {
     let name: String
     let original: String?
@@ -57,7 +54,6 @@ struct APIIngredient: Codable {
     let unit: String
 }
 
-// MARK: - Instructions
 struct APIInstruction: Codable {
     let steps: [APIInstructionStep]
 }
@@ -67,7 +63,6 @@ struct APIInstructionStep: Codable {
     let step: String
 }
 
-// MARK: - Nutrition
 struct APINutrition: Codable {
     let nutrients: [APINutrient]
 }

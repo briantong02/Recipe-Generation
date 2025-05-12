@@ -37,7 +37,11 @@ struct SavedRecipeView: View {
                         }
                         Spacer()
                         Button(action: {
-                            viewModel.removeRecipe(recipe)
+                            if viewModel.isRecipeSaved(recipe) {
+                                viewModel.removeRecipe(recipe)
+                            } else {
+                                viewModel.saveRecipe(recipe)
+                            }
                         }) {
                             Image(systemName: viewModel.isRecipeSaved(recipe) ? "bookmark.fill" : "bookmark")
                                 .foregroundColor(viewModel.isRecipeSaved(recipe) ? .blue : .gray)

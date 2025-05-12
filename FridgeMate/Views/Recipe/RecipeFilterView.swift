@@ -38,7 +38,6 @@ struct RecipeFilterView: View {
                         .foregroundColor(Color.blue)
                 }
             }
-//            .padding(.vertical, 2)
             Spacer(minLength: 0)
             Button(action: {
                 onFilter()

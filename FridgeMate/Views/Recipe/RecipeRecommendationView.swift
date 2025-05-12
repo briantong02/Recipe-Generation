@@ -62,7 +62,7 @@ struct RecipeRecommendationView: View {
                 .listStyle(PlainListStyle())
             }
         }
-        .navigationTitle("Recommendations")
+        .navigationTitle("Recipe")
         .toolbar {
             Button { vm.loadRecipes(from: fridgeVM.ingredients) }
             label: { Image(systemName: "arrow.clockwise") }
