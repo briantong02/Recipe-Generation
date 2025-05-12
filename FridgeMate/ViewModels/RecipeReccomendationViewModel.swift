@@ -18,7 +18,6 @@ class RecipeRecommendationViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var selectedCookingTime: CookingTimeFilter = .all
-    
     @Published var savedRecipes: [Recipe] = []
     
     private let fileURL: URL = {
@@ -27,65 +26,90 @@ class RecipeRecommendationViewModel: ObservableObject {
     }()
     
     private var cancellables = Set<AnyCancellable>()
-    
     private var lastIngredients: [Ingredient] = []
     
     init() {
         loadSavedRecipes()
     }
     
-    // Load recipes based on fridge ingredients
+    // Load recipes based on ingredients
     func loadRecipes(from ingredients: [Ingredient]) {
-        // 재료가 바뀌지 않았다면 API 호출하지 않음
+        // Skip API call if ingredients haven't changed and we have recipes
         if ingredients == lastIngredients && !recipes.isEmpty {
             return
         }
+        
         lastIngredients = ingredients
-        print("⚙️ loadRecipes called with:", ingredients.map(\.name))
+        print("⚙️ Loading recipes for ingredients:", ingredients.map(\.name))
+        
         guard !ingredients.isEmpty else {
             self.recipes = []
             return
         }
 
         let ingredientNames = ingredients.map { $0.name }
-
         isLoading = true
         errorMessage = nil
 
-        // Step 1: fetch simplified recipe results
+        // First fetch basic recipe info
         RecipeService.shared.fetchRecipes(query: ingredientNames)
             .flatMap { simpleResults -> AnyPublisher<[Recipe], Error> in
+                print("📊 Found \(simpleResults.count) simple results")
                 let ids = simpleResults.compactMap { $0.id }
                 guard !ids.isEmpty else {
                     return Just([])
                         .setFailureType(to: Error.self)
                         .eraseToAnyPublisher()
                 }
-                // Step 2: bulk fetch full info for these IDs
+                
+                // Then fetch detailed info for each recipe
                 return RecipeService.shared.fetchBulkRecipeDetails(ids: ids)
                     .map { fullDetails in
-                        fullDetails.map { Recipe(api: $0) }
+                        print("📊 Received \(fullDetails.count) detailed recipes")
+                        return fullDetails.map { Recipe(api: $0) }
                     }
                     .eraseToAnyPublisher()
             }
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { [weak self] completion in
-                print("📡 completion:", completion)
-                self?.isLoading = false
-                if case .failure(let error) = completion {
-                    self?.errorMessage = error.localizedDescription
+            .sink(
+                receiveCompletion: { [weak self] completion in
+                    self?.isLoading = false
+                    if case .failure(let error) = completion {
+                        print("❌ Recipe loading failed:", error.localizedDescription)
+                        // Provide more user-friendly error message
+                        if let urlError = error as? URLError {
+                            switch urlError.code {
+                            case .timedOut:
+                                self?.errorMessage = "Connection timed out. Please try again."
+                            case .notConnectedToInternet:
+                                self?.errorMessage = "No internet connection. Please check your network."
+                            default:
+                                self?.errorMessage = "Network error: \(urlError.localizedDescription)"
+                            }
+                        } else {
+                            self?.errorMessage = error.localizedDescription
+                        }
+                    }
+                },
+                receiveValue: { [weak self] receivedRecipes in
+                    guard let self = self else { return }
+                    print("✅ Received \(receivedRecipes.count) recipes")
+                    
+                    // Apply cooking time filter
+                    self.recipes = receivedRecipes.filter { recipe in
+                        self.selectedCookingTime.matches(recipe.cookingTime)
+                    }
+                    
+                    if self.recipes.isEmpty && !receivedRecipes.isEmpty {
+                        // We have recipes but they're all filtered out
+                        print("⚠️ All recipes filtered out by cooking time filter")
+                    }
                 }
-            }, receiveValue: { [weak self] receivedRecipes in
-                print("✅ received \(receivedRecipes.count) recipes")
-                guard let self = self else { return }
-                
-                // Filter recipes based on cooking time
-                self.recipes = receivedRecipes.filter { recipe in
-                    self.selectedCookingTime.matches(recipe.cookingTime)
-                }
-            })
+            )
             .store(in: &cancellables)
     }
+    
+    // MARK: - Saved Recipes Management
     
     func saveRecipe(_ recipe: Recipe) {
         if !isRecipeSaved(recipe) {
@@ -114,7 +138,7 @@ class RecipeRecommendationViewModel: ObservableObject {
             let data = try JSONEncoder().encode(savedRecipes)
             try data.write(to: fileURL)
         } catch {
-            print("Failed to save recipes: \(error)")
+            print("Failed to save recipes:", error)
         }
     }
     
@@ -126,6 +150,5 @@ class RecipeRecommendationViewModel: ObservableObject {
             savedRecipes = []
         }
     }
-    
 }
 
