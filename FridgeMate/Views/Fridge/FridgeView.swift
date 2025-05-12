@@ -17,11 +17,23 @@ struct FridgeView: View {
     @State private var showSortSheet = false
     @State private var selectedSort: SortOption? = nil
     @State private var sortOrder: SortOrder = .ascending
+    @State private var showClearConfirmation = false
     
-    private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible())
-    ]
+    // Calculate grid columns based on device size
+    private var gridColumns: [GridItem] {
+        let screenWidth = UIScreen.main.bounds.width
+        if screenWidth > 768 { // iPad
+            return [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ]
+        } else { // All iPhones
+            return [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ]
+        }
+    }
     
     var filteredIngredients: [Ingredient] {
         var result = viewModel.ingredients
@@ -128,7 +140,7 @@ struct FridgeView: View {
                             ForEach(IngredientCategory.allCases, id: \.self) { category in
                                 if let ingredients = groupedIngredients[category], !ingredients.isEmpty {
                                     Section(header: CategoryHeader(title: category.rawValue)) {
-                                        LazyVGrid(columns: columns, spacing: 16) {
+                                        LazyVGrid(columns: gridColumns, spacing: 16) {
                                             ForEach(ingredients) { ingredient in
                                                 IngredientCardView(ingredient: ingredient)
                                                     .onTapGesture {
@@ -156,7 +168,20 @@ struct FridgeView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    Button {
+                        showClearConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
                 }
+            }
+            .alert("Clear All Ingredients", isPresented: $showClearConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Clear All", role: .destructive) {
+                    viewModel.clearIngredients()
+                }
+            } message: {
+                Text("Are you sure you want to remove all ingredients from your fridge?")
             }
             .sheet(isPresented: $showingQuickAddSheet) {
                 CategoryIngredientSelectionView(viewModel: viewModel)

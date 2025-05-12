@@ -126,9 +126,5 @@ class FridgeViewModel: ObservableObject {
             .appendingPathComponent("ingredients.json")
     }
 
-    private static func getPreferencesFileURLStatic() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("user_preferences.json")
-    }
 }
 

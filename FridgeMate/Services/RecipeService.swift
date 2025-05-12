@@ -11,7 +11,6 @@ import Combine
 // Centralised service for Sponacular API interaction
 class RecipeService {
     static let shared = RecipeService()
-//    private let apiKey = "ccfd8971c58b4f84be3616e3c3ca0d17"
     private let baseURL = URL(string: Constant.baseURL)!
 
     // Fetch recipes with detailed info based on ingredients
@@ -27,7 +26,6 @@ class RecipeService {
         )!
         components.queryItems = [
             URLQueryItem(name: "ingredients", value: ingredients.joined(separator: ",")),
-            // URLQueryItem(name: "addRecipeInformation", value: "true"),
             URLQueryItem(name: "number", value: "10"),
             URLQueryItem(name: "apiKey", value: Constant.apiKey)
         ]
@@ -36,7 +34,6 @@ class RecipeService {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        // Perform the network request and decode into [APIRecipe]
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { output in
                 if let jsonString = String(data: output.data, encoding: .utf8) {
@@ -96,9 +93,8 @@ class RecipeService {
         let request = URLRequest(url: components.url!)
         
         let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
         
-        // Perform the network request and decode into a single APIRecipe
         return URLSession.shared.dataTaskPublisher(for: request)
             .map(\.data)
             .decode(type: APIRecipe.self, decoder: decoder)

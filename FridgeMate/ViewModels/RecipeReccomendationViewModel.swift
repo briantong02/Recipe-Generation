@@ -75,14 +75,13 @@ class RecipeRecommendationViewModel: ObservableObject {
                 if case .failure(let error) = completion {
                     self?.errorMessage = error.localizedDescription
                 }
-            }, receiveValue: { [weak self] recipes in
-                print("✅ received \(recipes.count) recipes")
+            }, receiveValue: { [weak self] receivedRecipes in
+                print("✅ received \(receivedRecipes.count) recipes")
+                guard let self = self else { return }
                 
                 // Filter recipes based on cooking time
-                if let self = self {
-                    self.recipes = recipes.filter { recipe in
-                        self.selectedCookingTime.matches(recipe.cookingTime)
-                    }
+                self.recipes = receivedRecipes.filter { recipe in
+                    self.selectedCookingTime.matches(recipe.cookingTime)
                 }
             })
             .store(in: &cancellables)

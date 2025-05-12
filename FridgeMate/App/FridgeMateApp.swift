@@ -22,20 +22,19 @@ struct FridgeMateApp: App {
             } else {
                 // Main TabView
                 TabView(selection: $selectedTab) {
-                    NavigationView {
+                    NavigationStack {
                         FridgeView(viewModel: viewModel)
                     }
                     .tabItem { Label("Fridge", systemImage: "refrigerator") }
                     .tag(0)
 
-                    NavigationView {
+                    NavigationStack {
                         RecipeRecommendationView(fridgeVM: viewModel, vm: recipeViewModel)
                     }
                     .tabItem { Label("Recipes", systemImage: "book") }
                     .tag(1)
 
-                    NavigationView {
-//                        UserPreferencesView(viewModel: viewModel, selectedTab: $selectedTab)
+                    NavigationStack {
                         SavedRecipeView(
                             viewModel: recipeViewModel
                         )
