@@ -142,19 +142,19 @@ struct RecipeRecommendationView: View {
             }
         }
         .navigationTitle("Recipe")
-        .toolbar {
-            Button(action: loadRecipes) {
-                Image(systemName: "arrow.clockwise")
-            }
-        }
+//        .toolbar {
+//            Button(action: loadRecipes) {
+//                Image(systemName: "arrow.clockwise")
+//            }
+//        }
         .onAppear {
             loadRecipes()
         }
-        .onChange(of: fridgeVM.ingredients) { oldList, newList in
-            print("🍽 old:", oldList.map(\.name))
-            print("🍽 new:", newList.map(\.name))
-            loadRecipes()
-        }
+//        .onChange(of: fridgeVM.ingredients) { oldList, newList in
+//            print("🍽 old:", oldList.map(\.name))
+//            print("🍽 new:", newList.map(\.name))
+//            loadRecipes()
+//        }
         .sheet(item: $selectedRecipe) { recipe in
             NavigationStack {
                 RecipeDetailView(recipe: recipe, recipeViewModel: vm)
@@ -169,12 +169,12 @@ struct RecipeRecommendationView: View {
         // First test API connectivity using the completion handler
         RecipeService.shared.testAPIConnectivity { isConnected in
             if isConnected {
-                print("✅ API connectivity test passed, loading recipes...")
+                print("API connectivity test passed, loading recipes...")
                 self.vm.loadRecipes(from: self.fridgeVM.ingredients)
                 // Apply current filter after loading recipes
                 self.vm.applyCurrentFilter()
             } else {
-                print("❌ API connectivity test failed")
+                print("API connectivity test failed")
                 self.vm.isLoading = false
                 self.vm.errorMessage = "Cannot connect to recipe service. Please check your internet connection and try again."
             }
