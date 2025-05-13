@@ -42,6 +42,15 @@ struct FridgeMateApp: App {
                     .tabItem { Label("Saved", systemImage: "bookmark") }
                     .tag(2)
                 }
+                .onChange(of: selectedTab) { oldTab, newTab in
+                    // When switching to Recipe tab (index 1), load recipes automatically
+                    if newTab == 1 && !viewModel.ingredients.isEmpty {
+                        // Load recipes with a slight delay to ensure view is fully loaded
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            recipeViewModel.loadRecipes(from: viewModel.ingredients)
+                        }
+                    }
+                }
                 .environmentObject(viewModel)
             }
         }

@@ -27,6 +27,7 @@ class RecipeRecommendationViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var lastIngredients: [Ingredient] = []
+    private var lastCookingTimeFilter: CookingTimeFilter = .all
     
     init() {
         loadSavedRecipes()
@@ -34,12 +35,13 @@ class RecipeRecommendationViewModel: ObservableObject {
     
     // Load recipes based on ingredients
     func loadRecipes(from ingredients: [Ingredient]) {
-        // Skip API call if ingredients haven't changed and we have recipes
-        if ingredients == lastIngredients && !recipes.isEmpty {
+        // Skip API call if ingredients haven't changed, filter hasn't changed, and we have recipes
+        if ingredients == lastIngredients && selectedCookingTime == lastCookingTimeFilter && !recipes.isEmpty {
             return
         }
         
         lastIngredients = ingredients
+        lastCookingTimeFilter = selectedCookingTime
         print("⚙️ Loading recipes for ingredients:", ingredients.map(\.name))
         
         guard !ingredients.isEmpty else {
@@ -95,6 +97,9 @@ class RecipeRecommendationViewModel: ObservableObject {
                     guard let self = self else { return }
                     print("✅ Received \(receivedRecipes.count) recipes")
                     
+                    // Store all unfiltered recipes
+                    self.allRecipes = receivedRecipes
+                    
                     // Apply cooking time filter
                     self.recipes = receivedRecipes.filter { recipe in
                         self.selectedCookingTime.matches(recipe.cookingTime)
@@ -103,6 +108,8 @@ class RecipeRecommendationViewModel: ObservableObject {
                     if self.recipes.isEmpty && !receivedRecipes.isEmpty {
                         // We have recipes but they're all filtered out
                         print("⚠️ All recipes filtered out by cooking time filter")
+                    } else {
+                        print("✅ Successfully loaded \(self.recipes.count) recipes after filtering")
                     }
                 }
             )
@@ -129,6 +136,43 @@ class RecipeRecommendationViewModel: ObservableObject {
                 return apiID == savedApiID
             } else {
                 return recipe.id == saved.id
+            }
+        }
+    }
+    
+    // MARK: - Filtering
+    
+    // Store original unfiltered recipes
+    private(set) var allRecipes: [Recipe] = []
+    
+    // Apply the current cooking time filter to already loaded recipes
+    func applyCurrentFilter() {
+        guard !lastIngredients.isEmpty else { return }
+        
+        print("🔍 Applying filter: \(selectedCookingTime.rawValue)")
+        
+        // If we don't have any recipes or filter changed and we need to reload from API
+        if (recipes.isEmpty && allRecipes.isEmpty) || (selectedCookingTime != lastCookingTimeFilter && allRecipes.isEmpty) {
+            // Force reload by setting lastCookingTimeFilter to current filter
+            lastCookingTimeFilter = selectedCookingTime
+            loadRecipes(from: lastIngredients)
+            return
+        }
+        
+        // We have recipes, just apply the filter to existing recipes
+        if !allRecipes.isEmpty {
+            // Update the last filter to the current one
+            lastCookingTimeFilter = selectedCookingTime
+            
+            // Apply filter to all recipes
+            recipes = allRecipes.filter { recipe in
+                selectedCookingTime.matches(recipe.cookingTime)
+            }
+            
+            if recipes.isEmpty && !allRecipes.isEmpty {
+                print("⚠️ All recipes filtered out by cooking time filter")
+            } else {
+                print("✅ Applied filter: \(selectedCookingTime.rawValue), showing \(recipes.count) recipes")
             }
         }
     }

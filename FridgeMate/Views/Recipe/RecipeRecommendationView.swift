@@ -30,7 +30,8 @@ struct RecipeRecommendationView: View {
             RecipeFilterView(
                 selectedCookingTime: $vm.selectedCookingTime,
                 onFilter: {
-                    loadRecipes()
+                    // Apply current filter to existing recipes or reload if needed
+                    vm.applyCurrentFilter()
                 }
             )
             
@@ -64,16 +65,54 @@ struct RecipeRecommendationView: View {
                     Text("No recipes found")
                         .font(.headline)
                     
-                    Text("Try adding more ingredients to your fridge or changing the filter")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    Button(action: loadRecipes) {
-                        Label("Refresh", systemImage: "arrow.clockwise")
+                    if vm.selectedCookingTime != .all && !vm.allRecipes.isEmpty {
+                        // No recipes after filtering
+                        Text("No recipes match the selected cooking time filter: \(vm.selectedCookingTime.rawValue)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: {
+                            vm.selectedCookingTime = .all
+                            vm.applyCurrentFilter()
+                        }) {
+                            Text("Show all recipes")
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
+                    } else if fridgeVM.ingredients.isEmpty {
+                        // No ingredients in fridge
+                        Text("Add ingredients to your fridge first to get recipe recommendations")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        NavigationLink(destination: FridgeView(viewModel: fridgeVM)) {
+                            Text("Go to Fridge")
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
+                    } else {
+                        // No recipes at all with ingredients
+                        Text("Try adding more ingredients to your fridge or changing the filter")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: loadRecipes) {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
                 }
                 Spacer()
             } else {
@@ -132,6 +171,8 @@ struct RecipeRecommendationView: View {
             if isConnected {
                 print("✅ API connectivity test passed, loading recipes...")
                 self.vm.loadRecipes(from: self.fridgeVM.ingredients)
+                // Apply current filter after loading recipes
+                self.vm.applyCurrentFilter()
             } else {
                 print("❌ API connectivity test failed")
                 self.vm.isLoading = false
