@@ -19,12 +19,6 @@ class FridgeViewModel: ObservableObject {
             FridgeViewModel.saveIngredientsStatic(ingredients)
         }
     }
-    // The user’s saved preferences (cuisine, allergies, etc.)
-    @Published var userPreferences: UserPreferences = FridgeViewModel.loadPreferencesStatic() {
-        didSet {
-            FridgeViewModel.savePreferencesStatic(userPreferences)
-        }
-    }
     
     // Recipes recommended based on the current fridge contents
     @Published var recommendedRecipes: [Recipe] = []
@@ -35,12 +29,10 @@ class FridgeViewModel: ObservableObject {
     // Any error message from the last fetch
     @Published var errorMessage: String?
 
-    // MARK: - Private
 
     // Store Combine subscriptions
     private var cancellables = Set<AnyCancellable>()
 
-    // MARK: - Ingredient Management
 
     // Add a single ingredient to the fridge
     func addIngredient(_ ingredient: Ingredient) {
@@ -65,15 +57,6 @@ class FridgeViewModel: ObservableObject {
     func clearIngredients() {
         ingredients.removeAll()
     }
-
-    // MARK: - User Preferences
-
-    // Update the user’s cuisine/allergy preferences
-    func updateUserPreferences(_ preferences: UserPreferences) {
-        userPreferences = preferences
-    }
-
-    // MARK: - Recipe Recommendation
 
     // Fetch recommendations from Spoonacular based on current `ingredients`
     func findRecipes() {
@@ -114,8 +97,6 @@ class FridgeViewModel: ObservableObject {
     }
 
 
-// MARK: - Persistence
-
     // Save ingredients to disk (called automatically on change)
     private static func saveIngredientsStatic(_ ingredients: [Ingredient]) {
         let url = getIngredientsFileURLStatic()
@@ -144,40 +125,6 @@ class FridgeViewModel: ObservableObject {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
             .appendingPathComponent("ingredients.json")
     }
-    
-    // MARK: - Persistence for User Preferences
 
-    private static func savePreferencesStatic(_ preferences: UserPreferences) {
-        let url = getPreferencesFileURLStatic()
-        do {
-            let data = try JSONEncoder().encode(preferences)
-            try data.write(to: url)
-        } catch {
-            print("❌ Failed to save user preferences: \(error)")
-        }
-    }
-
-    private static func loadPreferencesStatic() -> UserPreferences {
-        let url = getPreferencesFileURLStatic()
-        do {
-            let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode(UserPreferences.self, from: data)
-        } catch {
-            print("⚠️ No saved user preferences found or failed to decode: \(error)")
-            return UserPreferences(
-                nationality: .other,
-                preferences: [],
-                allergies: [],
-                cookingSkillLevel: .beginner,
-                cookingTools: [],
-                maxPrepTime: .quick
-            )
-        }
-    }
-
-    private static func getPreferencesFileURLStatic() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("user_preferences.json")
-    }
 }
 

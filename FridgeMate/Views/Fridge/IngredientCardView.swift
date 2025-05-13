@@ -10,6 +10,18 @@ import SwiftUI
 struct IngredientCardView: View {
     let ingredient: Ingredient
     
+    // Font size adjustment based on device size
+    private var textStyle: (titleSize: CGFloat, subtitleSize: CGFloat, captionSize: CGFloat) {
+        let screenWidth = UIScreen.main.bounds.width
+        if screenWidth > 768 { // iPad
+            return (titleSize: 20, subtitleSize: 16, captionSize: 14)
+        } else if screenWidth > 430 { // iPhone Pro Max
+            return (titleSize: 17, subtitleSize: 14, captionSize: 12)
+        } else { // Regular iPhone
+            return (titleSize: 15, subtitleSize: 12, captionSize: 10)
+        }
+    }
+    
     var expiryStatus: ExpiryStatus {
         guard let expiryDate = ingredient.expiryDate else { return .none }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0
@@ -23,11 +35,11 @@ struct IngredientCardView: View {
             // Title and Amount
             VStack(alignment: .leading, spacing: 4) {
                 Text(ingredient.name.capitalized)
-                    .font(.headline)
+                    .font(.system(size: textStyle.titleSize, weight: .semibold))
                     .lineLimit(1)
                 
                 Text("\(String(format: "%.1f", ingredient.amount)) \(ingredient.unit.rawValue)")
-                    .font(.subheadline)
+                    .font(.system(size: textStyle.subtitleSize))
                     .foregroundColor(.gray)
             }
             
@@ -37,11 +49,11 @@ struct IngredientCardView: View {
                     Image(systemName: expiryStatus.iconName)
                     Text(expiryStatus.message(for: expiryDate))
                 }
-                .font(.caption)
+                .font(.system(size: textStyle.captionSize))
                 .foregroundColor(expiryStatus.color)
             } else {
                 Text("No expiry date")
-                    .font(.caption)
+                    .font(.system(size: textStyle.captionSize))
                     .foregroundColor(.gray)
             }
         }

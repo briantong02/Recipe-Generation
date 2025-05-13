@@ -6,35 +6,114 @@
 //
 
 import SwiftUI
+import Combine
 
 // Int becomes Identifiable for sheet presentation
 extension Int: Identifiable { public var id: Int { self } }
 
+// Class to store cancellables (structs can't mutate self properties in methods)
+class CancellableStore {
+    var cancellables = Set<AnyCancellable>()
+}
+
 struct RecipeRecommendationView: View {
     @ObservedObject var fridgeVM: FridgeViewModel
-    @ObservedObject var vm : RecipeRecommendationViewModel
+    @ObservedObject var vm: RecipeRecommendationViewModel
     @State private var selectedRecipe: Recipe?
-
+    @State private var retryCount = 0
+    
+    // Use a class instance to store cancellables
+    private let cancellableStore = CancellableStore()
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Recommendation 제목 아래에 항상 고정
             RecipeFilterView(
                 selectedCookingTime: $vm.selectedCookingTime,
                 onFilter: {
-                    vm.loadRecipes(from: fridgeVM.ingredients)
+                    // Apply current filter to existing recipes or reload if needed
+                    vm.applyCurrentFilter()
                 }
             )
             
             if vm.isLoading {
                 Spacer()
-                ProgressView("Loading recipes...")
+                VStack {
+                    ProgressView("Loading recipes...")
+                    Text("This may take a moment...")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.top, 8)
+                }
                 Spacer()
             } else if let error = vm.errorMessage {
                 Spacer()
-                Text("Error: \(error)")
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .padding()
+                VStack(spacing: 16) {
+                    Text("Error: \(error)")
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                    
+                    Button(action: loadRecipes) {
+                        Label("Try Again", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                Spacer()
+            } else if vm.recipes.isEmpty {
+                Spacer()
+                VStack(spacing: 16) {
+                    Text("No recipes found")
+                        .font(.headline)
+                    
+                    if vm.selectedCookingTime != .all && !vm.allRecipes.isEmpty {
+                        // No recipes after filtering
+                        Text("No recipes match the selected cooking time filter: \(vm.selectedCookingTime.rawValue)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: {
+                            vm.selectedCookingTime = .all
+                            vm.applyCurrentFilter()
+                        }) {
+                            Text("Show all recipes")
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
+                    } else if fridgeVM.ingredients.isEmpty {
+                        // No ingredients in fridge
+                        Text("Add ingredients to your fridge first to get recipe recommendations")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        NavigationLink(destination: FridgeView(viewModel: fridgeVM)) {
+                            Text("Go to Fridge")
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .cornerRadius(8)
+                        }
+                    } else {
+                        // No recipes at all with ingredients
+                        Text("Try adding more ingredients to your fridge or changing the filter")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        
+                        Button(action: loadRecipes) {
+                            Label("Refresh", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
                 Spacer()
             } else {
                 List(vm.recipes) { recipe in
@@ -62,22 +141,42 @@ struct RecipeRecommendationView: View {
                 .listStyle(PlainListStyle())
             }
         }
-        .navigationTitle("Recommendations")
+        .navigationTitle("Recipe")
         .toolbar {
-            Button { vm.loadRecipes(from: fridgeVM.ingredients) }
-            label: { Image(systemName: "arrow.clockwise") }
+            Button(action: loadRecipes) {
+                Image(systemName: "arrow.clockwise")
+            }
         }
         .onAppear {
-            vm.loadRecipes(from: fridgeVM.ingredients)
+            loadRecipes()
         }
         .onChange(of: fridgeVM.ingredients) { oldList, newList in
             print("🍽 old:", oldList.map(\.name))
             print("🍽 new:", newList.map(\.name))
-            vm.loadRecipes(from: newList)
+            loadRecipes()
         }
         .sheet(item: $selectedRecipe) { recipe in
             NavigationStack {
                 RecipeDetailView(recipe: recipe, recipeViewModel: vm)
+            }
+        }
+    }
+    
+    private func loadRecipes() {
+        retryCount += 1
+        print("📲 Loading recipes (attempt \(retryCount))")
+        
+        // First test API connectivity using the completion handler
+        RecipeService.shared.testAPIConnectivity { isConnected in
+            if isConnected {
+                print("✅ API connectivity test passed, loading recipes...")
+                self.vm.loadRecipes(from: self.fridgeVM.ingredients)
+                // Apply current filter after loading recipes
+                self.vm.applyCurrentFilter()
+            } else {
+                print("❌ API connectivity test failed")
+                self.vm.isLoading = false
+                self.vm.errorMessage = "Cannot connect to recipe service. Please check your internet connection and try again."
             }
         }
     }

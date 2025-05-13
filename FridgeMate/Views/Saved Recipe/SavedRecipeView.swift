@@ -37,7 +37,11 @@ struct SavedRecipeView: View {
                         }
                         Spacer()
                         Button(action: {
-                            viewModel.removeRecipe(recipe)
+                            if viewModel.isRecipeSaved(recipe) {
+                                viewModel.removeRecipe(recipe)
+                            } else {
+                                viewModel.saveRecipe(recipe)
+                            }
                         }) {
                             Image(systemName: viewModel.isRecipeSaved(recipe) ? "bookmark.fill" : "bookmark")
                                 .foregroundColor(viewModel.isRecipeSaved(recipe) ? .blue : .gray)
@@ -47,7 +51,7 @@ struct SavedRecipeView: View {
                 }
                 .listStyle(PlainListStyle())
             }
-        }.navigationTitle("Saved Recipies")
+        }.navigationTitle("Saved Recipes")
             .sheet(item: $selectedRecipe) { recipe in
                 NavigationStack {
                     RecipeDetailView(recipe: recipe, recipeViewModel: viewModel)

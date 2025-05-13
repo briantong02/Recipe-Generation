@@ -20,6 +20,8 @@ struct RecipeFilterView: View {
                 ForEach(CookingTimeFilter.allCases, id: \.self) { filter in
                     Button(action: {
                         selectedCookingTime = filter
+                        // Automatically apply filter when selected from menu
+                        onFilter()
                     }) {
                         HStack {
                             Text(filter.rawValue)
@@ -38,20 +40,7 @@ struct RecipeFilterView: View {
                         .foregroundColor(Color.blue)
                 }
             }
-//            .padding(.vertical, 2)
             Spacer(minLength: 0)
-            Button(action: {
-                onFilter()
-            }) {
-                Text("Filter")
-                    .foregroundColor(.white)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -91,4 +80,4 @@ enum CookingTimeFilter: String, CaseIterable {
         selectedCookingTime: .constant(.all),
         onFilter: {}
     )
-}
+} 
