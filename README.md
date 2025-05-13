@@ -135,10 +135,15 @@ Follow the steps below to run the FridgeMate iOS application locally:
 ---
 
 ## How to Use
- 1.⁠ ⁠Launch the app and select ingredients you have.
- 2.⁠ ⁠Tap the Recipes tab to see suggestions.
- 3.⁠ ⁠Filter recipes by cooking time using the Filter button.
- 4.⁠ ⁠Tap any recipe for details and optionally save it.
+
+Follow these steps to get started with **FridgeMate**:
+
+1. **Launch the app** – Open FridgeMate on your iOS device.
+2. **Select your ingredients** – Tap to add items currently in your fridge.
+3. **View recipe suggestions** – Navigate to the **Recipes** tab to explore recommended dishes based on your selected ingredients.
+4. **Filter by cooking time** – Use the **Filter** button to refine results by your available cooking time.
+5. **Check details & bookmark** – Tap any recipe to view full instructions, ingredients, and nutrition info. You can also **bookmark** your favorites for later use.
+
 
 ---
 
